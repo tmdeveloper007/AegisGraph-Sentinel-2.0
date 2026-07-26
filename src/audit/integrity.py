@@ -9,6 +9,7 @@ from typing import Any, Iterable, Mapping
 
 
 def _payload(event_payload: Any) -> str:
+    """Serialize an event payload to a deterministic JSON string for hashing."""
     if is_dataclass(event_payload):
         event_payload = asdict(event_payload)
     return json.dumps(event_payload, sort_keys=True, separators=(",", ":"), default=str)
