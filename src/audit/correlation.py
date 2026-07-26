@@ -7,6 +7,7 @@ from typing import Optional
 
 
 def generate_correlation_id() -> str:
+    """Generate a new UUID-based correlation ID for request tracing."""
     return str(uuid.uuid4())
 
 
