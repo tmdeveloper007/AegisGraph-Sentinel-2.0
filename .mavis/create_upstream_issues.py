@@ -1,0 +1,102 @@
+import urllib.request, json, os, time
+
+GH_TOKEN = os.environ.get("GH_TOKEN", "")
+headers = {
+    "Authorization": f"token {GH_TOKEN}",
+    "Accept": "application/vnd.github.v3+json",
+    "Content-Type": "application/json"
+}
+
+issues = [
+    {
+        "issue_title": "refactor : add return type annotation to CampaignDetector.__init__",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a `-> None` return type annotation to the `__init__` method of the `CampaignDetector` class in `src/threat_hunting/campaign_detector.py`.\n\n## Changes that Need to be Made\n\nIn `src/threat_hunting/campaign_detector.py`, ensure the `__init__` method has `-> None:` in its signature. If missing, add it.\n\n## Impact that it would Provide\n\n- Improves type safety and IDE support for this threat hunting component.\n- Consistent with other `__init__` methods across the codebase.\n- No behavioral change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "refactor : added return type annotation to CampaignDetector.__init__",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded the `-> None` return type annotation to `CampaignDetector.__init__` in `src/threat_hunting/campaign_detector.py`.\n\n## Changes Made\n\n- Added `-> None` return type annotation to the constructor method.\n\n## Impact it Made\n\n- Consistent with type annotation standards across the codebase.\n- No runtime behavioral change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "docs : add docstring to get_dashboard method",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a docstring to the `get_dashboard` public method in `src/case_workflow/workflow_engine.py`.\n\n## Changes that Need to be Made\n\nIn `src/case_workflow/workflow_engine.py`, add a docstring to `get_dashboard` describing its return value.\n\n## Impact that it would Provide\n\n- Improves API discoverability and IDE support.\n- Documents expected return value for maintainers.\n- No behavioral change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "docs : added docstring to get_dashboard method",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded a docstring to `get_dashboard` in `src/case_workflow/workflow_engine.py`.\n\n## Changes Made\n\n- Added docstring to `get_dashboard` method.\n\n## Impact it Made\n\n- Better documentation for the workflow dashboard endpoint.\n- No runtime change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "refactor : add return type annotation to KnowledgeEngine.__init__",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a `-> None` return type annotation to `KnowledgeEngine.__init__` in `src/knowledge_os/knowledge_engine.py`.\n\n## Changes that Need to be Made\n\nUpdate the constructor signature to include `-> None`.\n\n## Impact that it would Provide\n\n- Consistent type annotations across the knowledge OS module.\n- Better static analysis support.\n- No runtime impact.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "refactor : added return type annotation to KnowledgeEngine.__init__",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded `-> None` return type annotation to `KnowledgeEngine.__init__` in `src/knowledge_os/knowledge_engine.py`.\n\n## Changes Made\n\n- Added `-> None` return type annotation to constructor.\n\n## Impact it Made\n\n- Consistent type coverage in the knowledge OS module.\n- No behavioral change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "refactor : add return type annotation to CaseWorkflowService.__init__",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a `-> None` return type annotation to `CaseWorkflowService.__init__` in `src/case_workflow/service.py`.\n\n## Changes that Need to be Made\n\nUpdate the constructor signature to include `-> None`.\n\n## Impact that it would Provide\n\n- Type safety consistency in the case workflow service layer.\n- Better static analysis.\n- No runtime change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "refactor : added return type annotation to CaseWorkflowService.__init__",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded `-> None` return type annotation to `CaseWorkflowService.__init__` in `src/case_workflow/service.py`.\n\n## Changes Made\n\n- Added `-> None` return type annotation to constructor.\n\n## Impact it Made\n\n- Consistent type coverage in the case workflow module.\n- No behavioral change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "refactor : add return type annotation to ExposureService.__init__",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a `-> None` return type annotation to `ExposureService.__init__` in `src/exposure_management/service.py`.\n\n## Changes that Need to be Made\n\nUpdate the constructor signature to include `-> None`.\n\n## Impact that it would Provide\n\n- Type safety consistency in the exposure management service.\n- No runtime change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "refactor : added return type annotation to ExposureService.__init__",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded `-> None` return type annotation to `ExposureService.__init__` in `src/exposure_management/service.py`.\n\n## Changes Made\n\n- Added `-> None` return type annotation to constructor.\n\n## Impact it Made\n\n- Consistent type coverage in the exposure management module.\n- No behavioral change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "refactor : add return type annotation and docstring to _utcnow helper",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a `-> str` return type annotation and docstring to the `_utcnow` helper method in `src/audit/audit_logger.py`.\n\n## Changes that Need to be Made\n\nUpdate `_utcnow` method to include `-> str` return type and a docstring.\n\n## Impact that it would Provide\n\n- Better type coverage for the audit logging module.\n- Documents the return type for maintainers.\n- No runtime change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "refactor : added return type annotation and docstring to _utcnow helper",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded `-> str` return type annotation and docstring to `_utcnow` in `src/audit/audit_logger.py`.\n\n## Changes Made\n\n- Added `-> str` return type annotation and docstring.\n\n## Impact it Made\n\n- Better type documentation for the audit module.\n- No behavioral change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "refactor : add return type annotation and docstring to discover_schema",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a `-> Dict[str, Any]` return type annotation and docstring to the `discover_schema` method in `src/data_pipeline/data_sources.py`.\n\n## Changes that Need to be Made\n\nUpdate the method signature to include `-> Dict[str, Any]` and add a docstring with Args and Returns sections.\n\n## Impact that it would Provide\n\n- Better type safety for the data pipeline module.\n- Documents expected return value.\n- No runtime change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "refactor : added return type annotation and docstring to discover_schema",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded `-> Dict[str, Any]` return type annotation and docstring to `discover_schema` in `src/data_pipeline/data_sources.py`.\n\n## Changes Made\n\n- Added return type annotation and docstring with Args and Returns sections.\n\n## Impact it Made\n\n- Improved type coverage for the data pipeline module.\n- No behavioral change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "docs : add docstring to get_dashboard in AlertCorrelationEngine",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a docstring to the `get_dashboard` public method in `src/alert_correlation/correlation_engine.py`.\n\n## Changes that Need to be Made\n\nAdd a docstring to `get_dashboard` describing its return value.\n\n## Impact that it would Provide\n\n- Improves API discoverability for the alert correlation engine.\n- No behavioral change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "docs : added docstring to get_dashboard in AlertCorrelationEngine",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded a docstring to `get_dashboard` in `src/alert_correlation/correlation_engine.py`.\n\n## Changes Made\n\n- Added docstring to `get_dashboard` method.\n\n## Impact it Made\n\n- Better API documentation for the alert correlation dashboard.\n- No runtime change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "refactor : add return type annotation to MLExplainerService.__init__",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a `-> None` return type annotation to `MLExplainerService.__init__` in `src/inference/explainer.py`.\n\n## Changes that Need to be Made\n\nUpdate the constructor signature to include `-> None`.\n\n## Impact that it would Provide\n\n- Type safety consistency in the inference module.\n- No runtime change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "refactor : added return type annotation to MLExplainerService.__init__",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded `-> None` return type annotation to `MLExplainerService.__init__` in `src/inference/explainer.py`.\n\n## Changes Made\n\n- Added `-> None` return type annotation to constructor.\n\n## Impact it Made\n\n- Consistent type coverage in the inference module.\n- No behavioral change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+    {
+        "issue_title": "refactor : add return type annotation to ReportingService.__init__",
+        "issue_body": "## Summary of What Needs to be Done\n\nAdd a `-> None` return type annotation to `ReportingService.__init__` in `src/reporting/service.py`.\n\n## Changes that Need to be Made\n\nUpdate the constructor signature to include `-> None`.\n\n## Impact that it would Provide\n\n- Type safety consistency in the reporting module.\n- No runtime change.\n\n## Note: Please assign this issue to the `tmdeveloper007` account.",
+        "pr_title": "refactor : added return type annotation to ReportingService.__init__",
+        "pr_body": "## Summary of What Has Been Done\n\nAdded `-> None` return type annotation to `ReportingService.__init__` in `src/reporting/service.py`.\n\n## Changes Made\n\n- Added `-> None` return type annotation to constructor.\n\n## Impact it Made\n\n- Consistent type coverage in the reporting module.\n- No behavioral change.\n\n## Note: Please assign this PR to the `tmdeveloper007` account.\n\nCloses #{issue_num}",
+    },
+]
+
+UPSTREAM_REPO = "Puneet04-tech/AegisGraph-Sentinel-2.0"
+created_issues = []
+
+for i, issue in enumerate(issues):
+    body = {
+        "title": issue["issue_title"],
+        "body": issue["issue_body"],
+        "labels": ["enhancement"]
+    }
+    data = json.dumps(body).encode()
+    url = f"https://api.github.com/repos/{UPSTREAM_REPO}/issues"
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    try:
+        resp = urllib.request.urlopen(req)
+        result = json.loads(resp.read())
+        issue_num = result["number"]
+        created_issues.append((issue_num, issue))
+        print(f"Issue #{issue_num}: {issue['issue_title'][:70]}")
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode()
+        print(f"Error ({i}): {e.code} {e.reason} - {err_body[:200]}")
+        created_issues.append((None, issue))
+    time.sleep(1)
+
+print(f"\nTotal issues created: {len([x for x in created_issues if x[0]])}")
+with open("/workspace/aegisgraph/.mavis/issue_nums.json", "w") as f:
+    json.dump([x[0] for x in created_issues if x[0]], f)
+with open("/workspace/aegisgraph/.mavis/issues_data.json", "w") as f:
+    json.dump(created_issues, f)
+print("Saved issue data.")
