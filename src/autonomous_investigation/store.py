@@ -99,6 +99,16 @@ class InvestigationStore:
     def store_case(self, case: InvestigationCase) -> None:
         """Store an investigation case."""
         with self._lock:
+            # Remove from old indexes if case already exists with different status/priority
+            existing = self._cases.get(case.case_id)
+            if existing:
+                old_status = existing.status.value
+                if old_status in self._case_by_status:
+                    self._case_by_status[old_status].discard(case.case_id)
+                old_priority = existing.priority.value
+                if old_priority in self._case_by_priority:
+                    self._case_by_priority[old_priority].discard(case.case_id)
+
             self._cases[case.case_id] = case
 
             # Update indexes
