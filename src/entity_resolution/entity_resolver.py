@@ -515,14 +515,17 @@ class EntityResolver:
         # Calculate average confidence and fetch entities
         result = []
         for other_id, info in similar.items():
-            # Calculate average confidence
+            # Calculate average confidence from shared-connection relationships
             confs = []
+            used_rels: set = set()
             for conn_id in info["shared_connections"]:
-                rels = self._store.get_relationships_for_entity(other_id)
+                rels = self._store.get_relationships_for_entity(conn_id)
                 for rel in rels:
                     if rel.source_id == entity_id or rel.target_id == entity_id:
-                        confs.append(rel.confidence_score)
-                        break
+                        rel_key = (min(rel.source_id, rel.target_id), max(rel.source_id, rel.target_id))
+                        if rel_key not in used_rels:
+                            confs.append(rel.confidence_score)
+                            used_rels.add(rel_key)
 
             if confs:
                 info["avg_confidence"] = sum(confs) / len(confs)
