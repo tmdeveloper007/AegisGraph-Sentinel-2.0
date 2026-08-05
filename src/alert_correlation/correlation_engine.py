@@ -87,6 +87,7 @@ class AlertCorrelationEngine:
     def find_duplicates(self, alert: Alert, threshold: float = 0.8) -> List[Alert]:
         """Find potential duplicate alerts"""
         duplicates = []
+        seen_ids: set = set()
         for other in self.alerts.values():
             if other.alert_id == alert.alert_id or other.deduplicated:
                 continue
@@ -94,11 +95,15 @@ class AlertCorrelationEngine:
             # Check title similarity
             similarity = self._calculate_similarity(alert.title, other.title)
             if similarity >= threshold:
-                duplicates.append(other)
+                if other.alert_id not in seen_ids:
+                    duplicates.append(other)
+                    seen_ids.add(other.alert_id)
             
             # Check indicator overlap
             if set(alert.indicators) & set(other.indicators):
-                duplicates.append(other)
+                if other.alert_id not in seen_ids:
+                    duplicates.append(other)
+                    seen_ids.add(other.alert_id)
         
         return duplicates
     
