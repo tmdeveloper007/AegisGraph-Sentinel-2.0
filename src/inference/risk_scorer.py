@@ -557,24 +557,22 @@ def compute_risk_score(
     graph_view = None
     
     # Check mule accounts even without graph loaded (for demo mode)
-    if graph_loaded:
-        # Check if accounts are in known fraud chains (mule accounts)
-        if source_account in mule_accounts:
-            graph_risk += 0.6
-            _inference_logger.warning(
-                f"Source account {source_account} is a known mule account",
-                event_type="mule_account_detected",
-                metadata={"account": source_account, "role": "source"},
-            )
-        if target_account in mule_accounts:
-            graph_risk += 0.4
-            _inference_logger.warning(
-                f"Target account {target_account} is a known mule account",
-                event_type="mule_account_detected",
-                metadata={"account": target_account, "role": "target"},
-            )
-        if source_account in mule_accounts and target_account in mule_accounts:
-            graph_risk += 0.3
+    if source_account in mule_accounts:
+        graph_risk += 0.6
+        _inference_logger.warning(
+            f"Source account {source_account} is a known mule account",
+            event_type="mule_account_detected",
+            metadata={"account": source_account, "role": "source"},
+        )
+    if target_account in mule_accounts:
+        graph_risk += 0.4
+        _inference_logger.warning(
+            f"Target account {target_account} is a known mule account",
+            event_type="mule_account_detected",
+            metadata={"account": target_account, "role": "target"},
+        )
+    if source_account in mule_accounts and target_account in mule_accounts:
+        graph_risk += 0.3
 
     if graph_loaded and transaction_graph:
         # Mule-account penalties are applied in the block above.
