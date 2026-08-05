@@ -110,7 +110,12 @@ class WorkflowEngine:
 
                 execution.task_results[task_name] = result
 
-            execution.state = WorkflowState.COMPLETED
+            # Set final state based on task results
+            has_failure = any(
+                r.get("status") == TASK_FAILED
+                for r in execution.task_results.values()
+            )
+            execution.state = WorkflowState.FAILED if has_failure else WorkflowState.COMPLETED
             execution.end_time = datetime.now(timezone.utc).isoformat()
             self.store.update_workflow_execution(execution)
 
