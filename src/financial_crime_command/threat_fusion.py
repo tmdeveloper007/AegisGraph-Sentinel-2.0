@@ -101,15 +101,17 @@ class ThreatFusionEngine:
         return False
 
     def _assess_cluster_level(self, threats: List[ThreatIndicator]) -> ThreatLevel:
-        """Assess threat level for a cluster."""
-        max_confidence = max(t.confidence for t in threats)
-        if max_confidence > 0.9:
+        """Assess threat level for a cluster using average confidence."""
+        if not threats:
+            return ThreatLevel.LOW
+        avg_confidence = sum(t.confidence for t in threats) / len(threats)
+        if avg_confidence > 0.85:
             return ThreatLevel.SEVERE
-        elif max_confidence > 0.7:
+        elif avg_confidence > 0.65:
             return ThreatLevel.CRITICAL
-        elif max_confidence > 0.5:
+        elif avg_confidence > 0.45:
             return ThreatLevel.HIGH
-        elif max_confidence > 0.3:
+        elif avg_confidence > 0.25:
             return ThreatLevel.MEDIUM
         return ThreatLevel.LOW
 
