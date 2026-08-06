@@ -68,6 +68,7 @@ class GraphStore:
         self._reverse_adjacency: Dict[str, Set[str]] = defaultdict(set)
         self._node_index: Dict[str, List[str]] = defaultdict(list)
         self._edge_index: Dict[str, List[str]] = defaultdict(list)
+        self._edge_pair_index: Dict[str, List[str]] = {}
         self._lock = threading.RLock()
         self._cache = LRUCache(max_cache_size)
         self._stats = GraphStats()
@@ -101,6 +102,8 @@ class GraphStore:
             self._adjacency[edge.source_id].add(edge.target_id)
             self._reverse_adjacency[edge.target_id].add(edge.source_id)
             self._edge_index[edge.edge_type.value].append(edge.edge_id)
+            pair_key = f"{edge.source_id}:{edge.target_id}"
+            self._edge_pair_index.setdefault(pair_key, []).append(edge.edge_id)
             self._update_stats()
             return True
 
@@ -135,13 +138,19 @@ class GraphStore:
         """Get all edges between two nodes."""
         with self._lock:
             edges = []
-            for edge in self._edges.values():
-                if (edge.source_id == source_id and edge.target_id == target_id) or \
-                   (edge.source_id == target_id and edge.target_id == source_id):
-                    edges.append(edge)
-            return edges
-
-    def bfs_traverse(self, start_id: str, max_depth: int = 5, edge_types: Optional[List[EdgeType]] = None) -> List[GraphNode]:
+            forward_key = f"{source_id}:{target_id}"
+            if forward_key in self._edge_pair_index:
+                for edge_id in self._edge_pair_index[forward_key]:
+                    edge = self._edges.get(edge_id)
+                    if edge:
+                        edges.append(edge)
+            reverse_key = f"{target_id}:{source_id}"
+            if reverse_key in self._edge_pair_index:
+                for edge_id in self._edge_pair_index[reverse_key]:
+                    edge = self._edges.get(edge_id)
+                    if edge:
+                        edges.append(edge)
+            return edges    def bfs_traverse(self, start_id: str, max_depth: int = 5, edge_types: Optional[List[EdgeType]] = None) -> List[GraphNode]:
         """Breadth-first search traversal."""
         with self._lock:
             visited = set()
