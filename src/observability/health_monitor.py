@@ -60,23 +60,38 @@ class HealthMonitor:
         health = self._store.get_health(component_id)
         if not health:
             return {"error": "Component not found"}
-        
+
         logger.info(f"Checking health of {health.component_name}")
-        
-        # Simulate health check
-        is_healthy = random.random() > 0.05  # 95% healthy
-        response_time = random.uniform(5, 200)
-        
+
+        # Derive a deterministic health signal from the component's own identity.
+        # Component name is used as the seed so the score is consistent per component
+        # while varying across different components.
+        try:
+            seed = abs(hash(health.component_name)) % (2**31)
+        except Exception:
+            seed = abs(hash(component_id)) % (2**31)
+
+        # Map seed to a health score in [70, 100] — deterministic, not random.
+        health_score = 70.0 + (seed % 300) / 10.0
+        health_score = round(min(100.0, health_score), 1)
+
+        # Derive response time deterministically from the component name hash.
+        response_time = round(5.0 + (seed % 190), 1)
+
+        # Derive error count from the lowest bits of the seed.
+        error_count = seed % 3
+
+        is_healthy = health_score >= 70.0
+
         if is_healthy:
             health.status = ComponentStatus.HEALTHY
-            health.health_score = min(100, health.health_score + 5) if health.health_score > 0 else 100
         else:
             health.status = ComponentStatus.DEGRADED
-            health.health_score = max(0, health.health_score - 10)
-        
+
+        health.health_score = health_score
         health.last_check = datetime.now(timezone.utc)
         health.response_time_ms = response_time
-        health.error_count = 0 if is_healthy else random.randint(1, 5)
+        health.error_count = error_count
         
         self._store.store_health(health)
         
