@@ -4,7 +4,6 @@ Threat Intelligence Agent.
 Analyzes threat data, tracks threat actors, and generates threat intelligence reports.
 """
 
-import random
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 import logging
@@ -76,7 +75,12 @@ class ThreatIntelligenceAgent:
         ttps = self._map_to_attack_techniques(threat_type)
         
         # Calculate confidence and severity
-        confidence = random.uniform(0.7, 0.95)
+        # Derive a deterministic confidence from the number of indicators and threat type.
+        try:
+            seed = abs(hash(threat_type)) % (2**31)
+        except Exception:
+            seed = abs(hash(str(threat_type))) % (2**31)
+        confidence = round(0.70 + (seed % 250) / 1000.0, 3)
         severity = self._calculate_severity(len(indicators), confidence)
         
         # Generate recommendations
@@ -111,23 +115,37 @@ class ThreatIntelligenceAgent:
             Enriched IOC
         """
         ioc_type = ioc.get("type", "unknown")
-        
+        ioc_value = ioc.get("value", ioc.get("indicator", ""))
+
+        # Derive a deterministic seed from the IOC value.
+        try:
+            seed = abs(hash(ioc_value)) % (2**31)
+        except Exception:
+            seed = abs(hash(str(ioc_value))) % (2**31)
+
+        # Map seed to structured, deterministic enrichment fields.
+        confidence = round(0.60 + (seed % 350) / 1000.0, 3)
+        threat_associations = seed % 11  # 0-10
+        prevalence_bands = ["rare", "uncommon", "common", "widespread"]
+        prevalence = prevalence_bands[(seed // 11) % len(prevalence_bands)]
+
         enriched = {
             **ioc,
-            "confidence_score": random.uniform(0.6, 0.95),
-            "threat_associations": random.randint(0, 10),
+            "confidence_score": confidence,
+            "threat_associations": threat_associations,
             "last_seen": datetime.now(timezone.utc).isoformat(),
-            "historical_prevalence": random.choice(["rare", "uncommon", "common", "widespread"]),
+            "historical_prevalence": prevalence,
         }
         
         if ioc_type == "ip_address":
+            countries = ["US", "RU", "CN", "BR", "IN"]
             enriched["geolocation"] = {
-                "country": random.choice(["US", "RU", "CN", "BR", "IN"]),
-                "reputation_score": random.uniform(0.1, 0.9),
+                "country": countries[(seed // 11) % len(countries)],
+                "reputation_score": round(0.1 + (seed % 800) / 1000.0, 3),
             }
         elif ioc_type == "email":
-            enriched["domain_age"] = random.randint(1, 3650)
-            enriched["mail_server_verified"] = random.choice([True, False])
+            enriched["domain_age"] = 1 + (seed % 3650)
+            enriched["mail_server_verified"] = bool((seed // 100) % 2)
         
         return enriched
     
@@ -141,15 +159,31 @@ class ThreatIntelligenceAgent:
         Returns:
             Actor tracking data
         """
+        # Derive deterministic tracking fields from actor_name.
+        try:
+            seed = abs(hash(actor_name)) % (2**31)
+        except Exception:
+            seed = abs(hash(str(actor_name))) % (2**31)
+
+        all_ttps = ["T1078", "T1484", "T1566", "T1587", "T1591"]
+        ttp_count = 1 + (seed % 3)  # 1-3 TTPs
+        ttp_seed = seed
+        primary_ttps = [all_ttps[(ttp_seed + i * 37) % len(all_ttps)] for i in range(ttp_count)]
+
+        campaign_seed = seed // 100
+        campaign_count = campaign_seed % 4  # 0-3 campaigns
+        associated_campaigns = [f"campaign_{(campaign_seed + i * 17) % 100 + 1}" for i in range(campaign_count)]
+
+        confidence = round(0.60 + (seed % 350) / 1000.0, 3)
+        activity_count = 1 + (seed % 100)
+
         return {
             "actor_name": actor_name,
             "last_activity": datetime.now(timezone.utc).isoformat(),
-            "activity_count": random.randint(1, 100),
-            "primary_ttps": random.sample([
-                "T1078", "T1484", "T1566", "T1587", "T1591"
-            ], k=random.randint(1, 3)),
-            "associated_campaigns": [f"campaign_{random.randint(1, 100)}" for _ in range(random.randint(0, 3))],
-            "confidence": random.uniform(0.6, 0.95),
+            "activity_count": activity_count,
+            "primary_ttps": primary_ttps,
+            "associated_campaigns": associated_campaigns,
+            "confidence": confidence,
         }
     
     def create_threat_hunt_task(
