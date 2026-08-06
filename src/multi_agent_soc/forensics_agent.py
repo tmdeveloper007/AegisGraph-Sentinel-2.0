@@ -4,7 +4,6 @@ Forensics Agent.
 Performs digital forensics analysis, evidence collection, and chain of custody tracking.
 """
 
-import random
 import hashlib
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
@@ -88,7 +87,7 @@ class ForensicsAgent:
             chain_of_custody=chain_of_custody,
             evidence_integrity_hash=evidence_hash,
             conclusion=conclusion,
-            confidence=random.uniform(0.75, 0.95),
+            confidence=round(0.75 + (abs(hash(target_entity_id)) % 200) / 1000.0, 3),
             examiner=self._agent_id,
         )
         
@@ -194,31 +193,42 @@ class ForensicsAgent:
         context: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Collect forensic artifacts."""
+        # Derive deterministic seeds from entity_id and analysis_type.
+        try:
+            entity_seed = abs(hash(entity_id)) % (2**31)
+            type_seed = abs(hash(analysis_type)) % (2**31)
+        except Exception:
+            entity_seed = abs(hash(str(entity_id))) % (2**31)
+            type_seed = abs(hash(str(analysis_type))) % (2**31)
+
         artifacts = []
         
         # Transaction logs
         if analysis_type in ["transaction", "comprehensive"]:
+            tx_count = 10 + (entity_seed % 990)  # 10-999
             artifacts.append({
                 "type": "transaction_log",
-                "count": random.randint(10, 1000),
+                "count": tx_count,
                 "source": "transaction_db",
                 "integrity": "verified",
             })
         
         # Access logs
         if analysis_type in ["access", "comprehensive"]:
+            access_count = 50 + (entity_seed % 451)  # 50-500
             artifacts.append({
                 "type": "access_log",
-                "count": random.randint(50, 500),
+                "count": access_count,
                 "source": "auth_system",
                 "integrity": "verified",
             })
         
         # Communication logs
         if analysis_type in ["communication", "comprehensive"]:
+            comm_count = 5 + (entity_seed % 96)  # 5-100
             artifacts.append({
                 "type": "communication_log",
-                "count": random.randint(5, 100),
+                "count": comm_count,
                 "source": "communication_service",
                 "integrity": "verified",
             })
@@ -238,17 +248,32 @@ class ForensicsAgent:
         entity_id: str,
         artifacts: List[Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
-        """Reconstruct activity timeline."""
+        """Reconstruct activity timeline using deterministic entity-based seeds."""
+        # Derive deterministic seeds from entity_id.
+        try:
+            entity_seed = abs(hash(entity_id)) % (2**31)
+        except Exception:
+            entity_seed = abs(hash(str(entity_id))) % (2**31)
+
+        event_types = ["login", "transaction", "profile_change", "api_call"]
+        results = ["success", "failed", "blocked"]
+        sources = ["web", "mobile", "api"]
+
+        event_count = 5 + (entity_seed % 16)  # 5-20 events
         events = []
-        for i in range(random.randint(5, 20)):
+        base_time = datetime.now(timezone.utc)
+        for i in range(event_count):
+            type_idx = (entity_seed + i * 7) % len(event_types)
+            result_idx = (entity_seed + i * 11) % len(results)
+            source_idx = (entity_seed + i * 13) % len(sources)
             events.append({
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "event_type": random.choice(["login", "transaction", "profile_change", "api_call"]),
+                "timestamp": base_time.isoformat(),
+                "event_type": event_types[type_idx],
                 "details": {
                     "action": f"action_{i}",
-                    "result": random.choice(["success", "failed", "blocked"]),
+                    "result": results[result_idx],
                 },
-                "source": random.choice(["web", "mobile", "api"]),
+                "source": sources[source_idx],
             })
         
         return sorted(events, key=lambda e: e["timestamp"])
@@ -280,20 +305,28 @@ class ForensicsAgent:
         artifacts: List[Dict[str, Any]],
         analysis_type: str,
     ) -> List[Dict[str, Any]]:
-        """Analyze collected artifacts."""
+        """Analyze collected artifacts using deterministic entity-based seeds."""
+        # Derive a seed from the analysis type for consistent artifact classification.
+        try:
+            type_seed = abs(hash(analysis_type)) % (2**31)
+        except Exception:
+            type_seed = abs(hash(str(analysis_type))) % (2**31)
+
+        significance_levels = ["critical", "high", "medium", "low"]
+        recommendations = ["review_required", "monitor", "investigate", "log_only"]
+
         findings = []
-        
-        for artifact in artifacts:
+        for idx, artifact in enumerate(artifacts):
+            art_seed = (type_seed + idx * 17) % (2**31)
+            sig_idx = art_seed % len(significance_levels)
+            # Anomaly is detected for higher-seed artifacts (top half).
+            anomaly_detected = (art_seed // 2) % 2 == 1
+            rec_idx = (art_seed + 3) % len(recommendations)
             findings.append({
                 "artifact_type": artifact.get("type"),
-                "significance": random.choice(["critical", "high", "medium", "low"]),
-                "anomaly_detected": random.choice([True, False]),
-                "recommendation": random.choice([
-                    "review_required",
-                    "monitor",
-                    "investigate",
-                    "log_only",
-                ]),
+                "significance": significance_levels[sig_idx],
+                "anomaly_detected": anomaly_detected,
+                "recommendation": recommendations[rec_idx],
             })
         
         return findings
