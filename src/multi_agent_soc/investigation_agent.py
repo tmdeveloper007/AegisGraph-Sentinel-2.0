@@ -5,7 +5,6 @@ Autonomous fraud investigation agent that analyzes entities, triages alerts,
 and manages investigation workflows.
 """
 
-import random
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 import logging
@@ -58,50 +57,63 @@ class InvestigationAgent:
         logger.info(f"Analyzing entity {entity_id}")
         
         context = context or {}
-        
-        # Simulate entity analysis
+
+        # Analyse entity using available context data.
         risk_factors = []
         findings = []
         evidence = []
-        
-        # Check for suspicious patterns
-        if random.random() > 0.5:
+
+        # Check for unusual transaction pattern via amount threshold.
+        amount = context.get('amount', 0)
+        if amount and amount > 10000:
             risk_factors.append("unusual_transaction_pattern")
             findings.append({
                 "type": "pattern_detection",
-                "description": "Unusual transaction pattern detected",
-                "severity": "HIGH",
-                "confidence": 0.75,
-            })
-        
-        if random.random() > 0.6:
-            risk_factors.append("device_anomaly")
-            findings.append({
-                "type": "device_mismatch",
-                "description": "Device fingerprint mismatch",
-                "severity": "MEDIUM",
-                "confidence": 0.65,
-            })
-        
-        if random.random() > 0.4:
-            risk_factors.append("velocity_breach")
-            findings.append({
-                "type": "velocity_exceeded",
-                "description": "Transaction velocity exceeded threshold",
+                "description": "Transaction amount exceeds high-value threshold",
                 "severity": "HIGH",
                 "confidence": 0.85,
             })
-        
-        # Generate evidence
+
+        # Check for device anomaly via missing or new device_id.
+        device_id = context.get('device_id')
+        if not device_id:
+            risk_factors.append("device_anomaly")
+            findings.append({
+                "type": "device_missing",
+                "description": "No device identifier present in transaction context",
+                "severity": "MEDIUM",
+                "confidence": 0.70,
+            })
+
+        # Check for velocity breach via transaction frequency in context.
+        txn_count = context.get('transaction_count', 0)
+        if txn_count > 5:
+            risk_factors.append("velocity_breach")
+            findings.append({
+                "type": "velocity_exceeded",
+                "description": f"Transaction count {txn_count} exceeds velocity threshold",
+                "severity": "HIGH",
+                "confidence": 0.80,
+            })
+
+        # Build evidence record from available context.
         evidence.append({
             "type": "transaction_history",
-            "count": random.randint(10, 100),
+            "count": max(1, txn_count),
             "suspicious_count": len(risk_factors),
             "confidence": 0.8,
         })
-        
-        # Calculate risk score
-        risk_score = min(1.0, sum(random.uniform(0.1, 0.3) for _ in risk_factors) / len(risk_factors)) if risk_factors else 0.1
+
+        # Calculate risk score from identified factors.
+        if risk_factors:
+            factor_scores = {
+                "unusual_transaction_pattern": 0.75,
+                "device_anomaly": 0.65,
+                "velocity_breach": 0.80,
+            }
+            risk_score = min(1.0, sum(factor_scores.get(f, 0.1) for f in risk_factors) / len(risk_factors))
+        else:
+            risk_score = 0.1
         
         # Determine status
         if risk_score >= 0.8:
@@ -143,9 +155,13 @@ class InvestigationAgent:
         logger.info(f"Triaging {len(alert_ids)} alerts")
         
         tasks = []
-        for alert_id in alert_ids:
-            # Generate risk estimate
-            estimated_risk = random.uniform(0.3, 0.9)
+        for idx, alert_id in enumerate(alert_ids):
+            # Derive a deterministic risk estimate from the alert_id.
+            try:
+                seed = abs(hash(alert_id)) % (2**31)
+            except Exception:
+                seed = idx
+            estimated_risk = round(0.3 + (seed % 600) / 1000.0, 3)
             
             task = AgentTask(
                 agent_type=self._agent_type,
@@ -241,18 +257,33 @@ class InvestigationAgent:
     
     def _find_linked_entities(self, entity_id: str, context: Dict[str, Any]) -> List[str]:
         """Find entities linked to the given entity."""
-        # Simulate linked entities
-        return [f"linked_{entity_id}_{i}" for i in range(random.randint(0, 5))]
+        # Return a deterministic linked entity list based on entity_id hash.
+        try:
+            seed = abs(hash(entity_id)) % (2**31)
+        except Exception:
+            seed = abs(hash(entity_id or "")) % (2**31)
+        count = seed % 6  # 0-5 linked entities
+        return [f"linked_{entity_id}_{i}" for i in range(count)]
     
     def _build_timeline(self, entity_id: str) -> List[Dict[str, Any]]:
         """Build activity timeline for entity."""
+        # Derive a deterministic event count and types from entity_id.
+        try:
+            seed = abs(hash(entity_id)) % (2**31)
+        except Exception:
+            seed = abs(hash(entity_id or "")) % (2**31)
+        event_count = 3 + (seed % 8)  # 3-10 events
+        event_types = ["transaction", "login", "profile_change"]
         timeline = []
-        for i in range(random.randint(3, 10)):
+        base_time = datetime.now(timezone.utc)
+        for i in range(event_count):
+            type_seed = (seed + i * 17) % len(event_types)
+            risk_seed = (seed + i * 31) % 2
             timeline.append({
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": base_time.isoformat(),
                 "event": f"activity_{i}",
-                "type": random.choice(["transaction", "login", "profile_change"]),
-                "risk_indicator": random.choice([True, False]),
+                "type": event_types[type_seed],
+                "risk_indicator": bool(risk_seed),
             })
         return timeline
 
