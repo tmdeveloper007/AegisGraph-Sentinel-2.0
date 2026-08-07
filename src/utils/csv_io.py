@@ -11,7 +11,7 @@ Row = Sequence[Any]
 DictRows = Sequence[dict]
 
 
-def read_csv_file(filepath, *, as_dicts: bool = True, encoding: str = "utf-8"):
+def read_csv_file(filepath: Any, *, as_dicts: bool = True, encoding: str = "utf-8") -> list[dict] | list[list[str]]:
     """Read a CSV file as a list of dicts (default) or list of lists."""
     path = Path(filepath)
     if not path.is_file():
@@ -22,7 +22,7 @@ def read_csv_file(filepath, *, as_dicts: bool = True, encoding: str = "utf-8"):
         return list(csv.reader(fh))
 
 
-def write_csv_file(rows, filepath, *, field_names=None, encoding: str = "utf-8", append: bool = False) -> str:
+def write_csv_file(rows: Any, filepath: Any, *, field_names: Any = None, encoding: str = "utf-8", append: bool = False) -> str:
     """Write dict or list rows to a CSV file; return the filepath."""
     path = Path(filepath)
     rows = list(rows)
