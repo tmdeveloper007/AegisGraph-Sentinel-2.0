@@ -7,13 +7,14 @@ identifier casing, and scrubbing log messages before they are emitted.
 
 import re
 import unicodedata
+from typing import Any
 
 _ANSI_CSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 _ANSI_OSC_RE = re.compile(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)")
 _CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 
 
-def slugify(value):
+def slugify(value: Any) -> str:
     """Convert ``value`` into a URL-safe slug.
 
     The text is lowercased, diacritics are stripped, runs of non-alphanumeric
@@ -27,7 +28,7 @@ def slugify(value):
     return value.strip("-")
 
 
-def truncate(value, max_length, suffix="..."):
+def truncate(value: Any, max_length: int, suffix: str = "...") -> str:
     """Truncate ``value`` to ``max_length`` including ``suffix``.
 
     Strings already at or below the limit are returned unchanged. When the
@@ -45,7 +46,7 @@ def truncate(value, max_length, suffix="..."):
     return value[: max_length - len(suffix)] + suffix
 
 
-def mask(text, visible=4, mask_char="*"):
+def mask(text: Any, visible: int = 4, mask_char: str = "*") -> str:
     """Mask the middle of ``text``, keeping the first and last ``visible``.
 
     Strings with no middle section (``len <= 2 * visible``) are unchanged.
@@ -62,14 +63,14 @@ def mask(text, visible=4, mask_char="*"):
     return text[:visible] + mask_char * middle + text[-visible:]
 
 
-def normalize_whitespace(value):
+def normalize_whitespace(value: Any) -> str:
     """Collapse all whitespace runs to single spaces and strip the result."""
     if value is None:
         return ""
     return re.sub(r"\s+", " ", str(value)).strip()
 
 
-def split_csv_line(line):
+def split_csv_line(line: Any) -> list[str]:
     """Parse a single CSV line into a list of fields.
 
     Quoted fields may contain embedded commas and doubled double quotes
@@ -110,7 +111,7 @@ def split_csv_line(line):
     return fields
 
 
-def camel_to_snake(value):
+def camel_to_snake(value: Any) -> str:
     """Convert camelCase or PascalCase identifiers to snake_case."""
     if value is None:
         return ""
@@ -119,7 +120,7 @@ def camel_to_snake(value):
     return value.lower()
 
 
-def sanitize_log_message(value):
+def sanitize_log_message(value: Any) -> str:
     """Strip ANSI escape sequences and control characters for safe logging."""
     if value is None:
         return ""
