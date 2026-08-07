@@ -43,7 +43,7 @@ def execute_with_retry_per_item(
     func: Callable[[Any], Any],
     *,
     max_attempts: int = 2,
-) -> dict:
+) -> dict[str, list]:
     """Run ``func(item)`` for each item, retrying failures.
 
     Returns ``{"success": [...], "failed": [{"item": ..., "error": str}]}``.
