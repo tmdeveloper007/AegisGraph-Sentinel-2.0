@@ -1,6 +1,7 @@
 """Throttling primitives: token bucket, minimum-interval gate, paced iteration."""
 
 import time
+from typing import Any, Callable, Iterator, Optional
 
 
 class TokenBucket:
@@ -11,7 +12,13 @@ class TokenBucket:
     defaults to ``time.monotonic``.
     """
 
-    def __init__(self, capacity, refill_rate, *, clock=None):
+    def __init__(
+        self,
+        capacity: float,
+        refill_rate: float,
+        *,
+        clock: Optional[Callable[[], float]] = None,
+    ) -> None:
         if capacity <= 0:
             raise ValueError("capacity must be positive")
         if refill_rate < 0:
@@ -22,14 +29,14 @@ class TokenBucket:
         self._tokens = float(capacity)
         self._last = self._clock()
 
-    def _accrue(self):
+    def _accrue(self) -> None:
         now = self._clock()
         if self._refill_rate:
             elapsed = max(0.0, now - self._last)
             self._tokens = min(self._capacity, self._tokens + elapsed * self._refill_rate)
         self._last = now
 
-    def consume(self, tokens=1.0):
+    def consume(self, tokens: float = 1.0) -> bool:
         if tokens <= 0:
             raise ValueError("tokens must be positive")
         self._accrue()
@@ -38,11 +45,11 @@ class TokenBucket:
         self._tokens -= tokens
         return True
 
-    def peek(self):
+    def peek(self) -> float:
         self._accrue()
         return self._tokens
 
-    def refill(self, amount):
+    def refill(self, amount: float) -> None:
         if amount < 0:
             raise ValueError("amount must be non-negative")
         self._accrue()
@@ -52,13 +59,13 @@ class TokenBucket:
 class RateGate:
     """Enforce a minimum interval between releases, blocking as needed."""
 
-    def __init__(self, interval_seconds):
+    def __init__(self, interval_seconds: float) -> None:
         if interval_seconds <= 0:
             raise ValueError("interval_seconds must be positive")
         self._interval = float(interval_seconds)
-        self._last_release = None
+        self._last_release: Optional[float] = None
 
-    def wait_if_needed(self):
+    def wait_if_needed(self) -> None:
         now = time.monotonic()
         if self._last_release is not None:
             elapsed = now - self._last_release
@@ -67,7 +74,12 @@ class RateGate:
         self._last_release = time.monotonic()
 
 
-def throttle_iterable(items, interval_seconds, *, clock=None):
+def throttle_iterable(
+    items: Iterable[Any],
+    interval_seconds: float,
+    *,
+    clock: Optional[Callable[[], float]] = None,
+) -> Iterator[Any]:
     """Yield ``items`` with a minimum gap between consecutive yields.
 
     The first item is yielded immediately. Sleeping uses ``time.sleep`` so
@@ -77,7 +89,7 @@ def throttle_iterable(items, interval_seconds, *, clock=None):
     if interval_seconds < 0:
         raise ValueError("interval_seconds must be non-negative")
     now = clock if clock is not None else time.monotonic
-    last = None
+    last: Optional[float] = None
     for item in items:
         if last is not None:
             elapsed = now() - last
