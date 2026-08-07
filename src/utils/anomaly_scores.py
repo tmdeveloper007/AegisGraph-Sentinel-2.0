@@ -71,7 +71,7 @@ def mad_median(values: List[float]) -> Tuple[float, float]:
     return median, statistics.median(deviations)
 
 
-def score_anomalies(values: List[float], *, method: str = "zscore") -> dict:
+def score_anomalies(values: List[float], *, method: str = "zscore") -> dict[int, float]:
     if not values:
         return {}
     if method not in ("zscore", "iqr"):
