@@ -8,13 +8,14 @@ explicit rounding contexts. ``divide`` deliberately lets ``Decimal`` raise
 
 import re
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from typing import Any
 
 _CENT = Decimal("0.01")
 _TWO_PLACES = Decimal("1.00")
 _CURRENCY_CODE_RE = re.compile(r"^[A-Z]{3}$")
 
 
-def to_minor(amount):
+def to_minor(amount: Any) -> int:
     """Convert ``Decimal`` (or str/int) amount to integer minor units.
 
     ``Decimal("12.34")`` -> ``1234``. Raises ``ValueError`` when the input
@@ -33,12 +34,12 @@ def to_minor(amount):
     return int((value * 100).to_integral_value(rounding=ROUND_HALF_UP))
 
 
-def from_minor(minor):
+def from_minor(minor: Any) -> Decimal:
     """Convert integer minor units (cents) to a ``Decimal`` major amount."""
     return (Decimal(int(minor)) / 100).quantize(_TWO_PLACES)
 
 
-def format_money(amount, *, currency="USD", thousands_sep=True):
+def format_money(amount: Any, *, currency: str = "USD", thousands_sep: bool = True) -> str:
     """Format a ``Decimal`` amount as ``"1,234.56 USD"``."""
     value = Decimal(amount).quantize(_TWO_PLACES, rounding=ROUND_HALF_UP)
     sign, digits, _ = value.as_tuple()
@@ -50,22 +51,22 @@ def format_money(amount, *, currency="USD", thousands_sep=True):
     return f"{'-' if sign else ''}{integer}.{fraction} {currency}"
 
 
-def add(a, b):
+def add(a: Any, b: Any) -> Decimal:
     """Add two ``Decimal`` amounts and quantize to 2 decimal places."""
     return (Decimal(a) + Decimal(b)).quantize(_TWO_PLACES)
 
 
-def subtract(a, b):
+def subtract(a: Any, b: Any) -> Decimal:
     """Subtract ``b`` from ``a`` and quantize to 2 decimal places."""
     return (Decimal(a) - Decimal(b)).quantize(_TWO_PLACES)
 
 
-def multiply(a, b):
+def multiply(a: Any, b: Any) -> Decimal:
     """Multiply two ``Decimal`` values and quantize to 2 decimal places."""
     return (Decimal(a) * Decimal(b)).quantize(_TWO_PLACES)
 
 
-def divide(a, b):
+def divide(a: Any, b: Any) -> Decimal:
     """Divide ``a`` by ``b`` and quantize to 2 decimal places.
 
     Raises ``decimal.DivisionByZero`` when ``b`` is zero.
@@ -73,12 +74,12 @@ def divide(a, b):
     return (Decimal(a) / Decimal(b)).quantize(_TWO_PLACES)
 
 
-def is_valid_currency_code(code):
+def is_valid_currency_code(code: Any) -> bool:
     """Return ``True`` if ``code`` is exactly three uppercase letters."""
     return isinstance(code, str) and bool(_CURRENCY_CODE_RE.fullmatch(code))
 
 
-def convert_minor(amount_minor, rate):
+def convert_minor(amount_minor: Any, rate: Decimal) -> int:
     """Convert minor units by a ``Decimal`` rate, rounding half-up per cent.
 
     ``rate`` must be a ``Decimal``; anything else raises ``TypeError``.
