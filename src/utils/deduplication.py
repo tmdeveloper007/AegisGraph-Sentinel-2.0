@@ -4,8 +4,10 @@
 records whose normalized key values are similar enough to be duplicates.
 """
 
+from typing import Any, Optional, Sequence
 
-def normalize_value(value):
+
+def normalize_value(value: Any) -> str:
     """Return a normalized string form of ``value`` for comparisons.
 
     Strings are lowercased, stripped, and stripped of internal whitespace.
@@ -18,7 +20,7 @@ def normalize_value(value):
     return str(value)
 
 
-def jaccard_similarity(a, b):
+def jaccard_similarity(a: str, b: str) -> float:
     """Return the token-level Jaccard similarity of ``a`` and ``b``."""
     tokens_a = set(a.split())
     tokens_b = set(b.split())
@@ -29,7 +31,7 @@ def jaccard_similarity(a, b):
     return len(tokens_a & tokens_b) / len(tokens_a | tokens_b)
 
 
-def exact_dedupe(records, keys=None):
+def exact_dedupe(records: Sequence[dict], keys: Optional[Sequence[str]] = None) -> list[dict]:
     """Remove exact duplicate dicts, preserving first occurrence order."""
     seen = set()
     result = []
@@ -44,9 +46,9 @@ def exact_dedupe(records, keys=None):
     return result
 
 
-def fuzzy_dedupe(records, keys, threshold=0.8):
+def fuzzy_dedupe(records: Sequence[dict], keys: Sequence[str], threshold: float = 0.8) -> list[dict]:
     """Group records whose normalized key-string Jaccard similarity matches."""
-    def _text(record):
+    def _text(record: dict) -> str:
         return " ".join(normalize_value(record.get(key)) for key in keys)
 
     groups = []
@@ -67,7 +69,7 @@ def fuzzy_dedupe(records, keys, threshold=0.8):
     return groups
 
 
-def merge_group(records):
+def merge_group(records: Sequence[dict]) -> dict:
     """Merge a group of dicts, preferring the first non-null value per key."""
     merged = {}
     for record in records:
