@@ -9,7 +9,7 @@ import json
 from typing import Any
 
 
-def sha256_hex(data):
+def sha256_hex(data: str | bytes) -> str:
     """Return the lowercase SHA-256 hex digest for str or bytes input.
 
     Strings are encoded as UTF-8 before hashing.
@@ -19,7 +19,7 @@ def sha256_hex(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def md5_hex(data):
+def md5_hex(data: str | bytes) -> str:
     """Return the MD5 hex digest for str or bytes input.
 
     NOT cryptographic: MD5 is broken and must not be used for security.
@@ -30,7 +30,7 @@ def md5_hex(data):
     return hashlib.md5(data).hexdigest()
 
 
-def deterministic_hash(*parts, length=12):
+def deterministic_hash(*parts: Any, length: int = 12) -> str:
     """Combine arbitrary parts into a stable hex digest truncated to length.
 
     Each part is rendered with repr so floats (0.1 vs 0.10000000000000001) and
@@ -40,7 +40,7 @@ def deterministic_hash(*parts, length=12):
     return hashlib.sha256(rendered.encode("utf-8")).hexdigest()[:length]
 
 
-def stable_json_hash(obj):
+def stable_json_hash(obj: Any) -> str:
     """Return a SHA-256 hex digest of a JSON-serializable object.
 
     Keys are sorted during serialization so semantically equal dicts with
@@ -50,7 +50,7 @@ def stable_json_hash(obj):
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def fnv1a(value):
+def fnv1a(value: Any) -> int:
     """Return the 32-bit FNV-1a hash of value as an int.
 
     Non-str/bytes inputs are rendered with repr for deterministic results.
@@ -68,7 +68,7 @@ def fnv1a(value):
     return h
 
 
-def hash_range(value, buckets):
+def hash_range(value: Any, buckets: int) -> int:
     """Map a value to a stable bucket index in [0, buckets) for sharding."""
     if buckets <= 0:
         raise ValueError(f"buckets must be positive, got {buckets}")
