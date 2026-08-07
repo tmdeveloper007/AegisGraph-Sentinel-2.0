@@ -7,6 +7,8 @@ spec dict. ``validate`` returns ``None`` on success and raises
 
 from __future__ import annotations
 
+from typing import Any
+
 _TYPE_NAMES = {"string", "number", "integer", "boolean", "list", "dict", "any"}
 
 
@@ -18,7 +20,7 @@ class SchemaError(Exception):
         self.errors = list(errors)
 
 
-def validate(data, schema):
+def validate(data: Any, schema: Any) -> None:
     """Validate ``data`` against ``schema``; raise :class:`SchemaError` on failure."""
     errors = []
     if not isinstance(data, dict):
@@ -30,7 +32,7 @@ def validate(data, schema):
     return None
 
 
-def is_valid(data, schema) -> bool:
+def is_valid(data: Any, schema: Any) -> bool:
     """Return True when ``data`` satisfies ``schema`` without raising."""
     try:
         validate(data, schema)
@@ -39,7 +41,7 @@ def is_valid(data, schema) -> bool:
     return True
 
 
-def _check_object(data, schema, errors, path):
+def _check_object(data: dict, schema: Any, errors: list, path: str) -> None:
     for field, spec in schema.items():
         field_path = "%s.%s" % (path, field) if path else field
         if field not in data:
@@ -49,7 +51,7 @@ def _check_object(data, schema, errors, path):
         _check_value(data[field], spec, field_path, errors)
 
 
-def _check_value(value, spec, path, errors):
+def _check_value(value: Any, spec: Any, path: str, errors: list) -> None:
     if isinstance(spec, str):
         spec = {"type": spec}
     if not _check_type(value, spec.get("type", "any"), path, errors):
@@ -66,7 +68,7 @@ def _check_value(value, spec, path, errors):
         _check_object(value, spec["properties"], errors, path)
 
 
-def _check_type(value, type_name, path, errors):
+def _check_type(value: Any, type_name: str, path: str, errors: list) -> bool:
     if type_name == "any":
         return True
     if type_name not in _TYPE_NAMES:
@@ -85,14 +87,14 @@ def _check_type(value, type_name, path, errors):
     return False
 
 
-def _check_numeric(value, spec, path, errors):
+def _check_numeric(value: float, spec: Any, path: str, errors: list) -> None:
     if "min" in spec and value < spec["min"]:
         errors.append("%s: must be >= %s, got %s" % (path, spec["min"], value))
     if "max" in spec and value > spec["max"]:
         errors.append("%s: must be <= %s, got %s" % (path, spec["max"], value))
 
 
-def _check_length(value, spec, path, errors):
+def _check_length(value: str, spec: Any, path: str, errors: list) -> None:
     if "min_length" in spec and len(value) < spec["min_length"]:
         errors.append(
             "%s: length must be >= %s, got %s" % (path, spec["min_length"], len(value))
@@ -103,18 +105,18 @@ def _check_length(value, spec, path, errors):
         )
 
 
-def _check_list_items(value, items_spec, path, errors):
+def _check_list_items(value: list, items_spec: Any, path: str, errors: list) -> None:
     for index, item in enumerate(value):
         _check_value(item, items_spec, "%s[%d]" % (path, index), errors)
 
 
-def _spec_required(spec) -> bool:
+def _spec_required(spec: Any) -> bool:
     if isinstance(spec, dict):
         return bool(spec.get("required", False))
     return True
 
 
-def _type_name(value) -> str:
+def _type_name(value: Any) -> str:
     if isinstance(value, bool):
         return "boolean"
     if isinstance(value, str):
