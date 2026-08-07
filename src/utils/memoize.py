@@ -3,11 +3,12 @@
 import time
 from collections import OrderedDict
 from functools import wraps
+from typing import Any, Callable, Dict, Optional, Tuple
 
 _clock = time.monotonic
 
 
-def _make_key(args, kwargs, key_func):
+def _make_key(args: tuple, kwargs: dict, key_func: Optional[Callable[..., Any]]) -> Any:
     if key_func is not None:
         return key_func(*args, **kwargs)
     key = (args, tuple(kwargs.items()))
@@ -21,16 +22,21 @@ def _make_key(args, kwargs, key_func):
 class TTLCache:
     """OrderedDict-backed cache with TTL expiry and LRU eviction."""
 
-    def __init__(self, ttl=None, maxsize=128, clock=None):
-        self.ttl = ttl
-        self.maxsize = maxsize
-        self._clock = clock if clock is not None else time.monotonic
-        self._data = OrderedDict()
+    def __init__(
+        self,
+        ttl: Optional[float] = None,
+        maxsize: int = 128,
+        clock: Optional[Callable[[], float]] = None,
+    ) -> None:
+        self.ttl: Optional[float] = ttl
+        self.maxsize: int = maxsize
+        self._clock: Callable[[], float] = clock if clock is not None else time.monotonic
+        self._data: OrderedDict[Any, Tuple[Any, float]] = OrderedDict()
 
-    def _now(self):
+    def _now(self) -> float:
         return self._clock()
 
-    def _expire(self, now=None):
+    def _expire(self, now: Optional[float] = None) -> None:
         if self.ttl is None:
             return
         if now is None:
@@ -42,7 +48,7 @@ class TTLCache:
         for k in expired:
             del self._data[k]
 
-    def get(self, key):
+    def get(self, key: Any) -> Optional[Any]:
         now = self._now()
         self._expire(now)
         if key not in self._data:
@@ -50,7 +56,7 @@ class TTLCache:
         self._data.move_to_end(key)
         return self._data[key][0]
 
-    def set(self, key, value):
+    def set(self, key: Any, value: Any) -> None:
         now = self._now()
         self._expire(now)
         self._data[key] = (value, now)
@@ -58,19 +64,24 @@ class TTLCache:
         while len(self._data) > self.maxsize:
             self._data.popitem(last=False)
 
-    def __contains__(self, key):
+    def __contains__(self, key: Any) -> bool:
         self._expire()
         return key in self._data
 
-    def __len__(self):
+    def __len__(self) -> int:
         self._expire()
         return len(self._data)
 
-    def clear(self):
+    def clear(self) -> None:
         self._data.clear()
 
 
-def memoize(ttl=None, *, key_func=None, maxsize=128):
+def memoize(
+    ttl: Optional[float] = None,
+    *,
+    key_func: Optional[Callable[..., Any]] = None,
+    maxsize: int = 128,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Cache results by arguments.
 
     ttl: seconds before an entry expires (None = never).
@@ -80,12 +91,12 @@ def memoize(ttl=None, *, key_func=None, maxsize=128):
     if maxsize <= 0:
         raise ValueError("maxsize must be positive")
 
-    def decorator(fn):
+    def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
         cache = TTLCache(ttl=ttl, maxsize=maxsize, clock=lambda: _clock())
-        stats = {"hits": 0, "misses": 0}
+        stats: Dict[str, int] = {"hits": 0, "misses": 0}
 
         @wraps(fn)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             key = _make_key(args, kwargs, key_func)
             if key in cache:
                 stats["hits"] += 1
@@ -95,23 +106,23 @@ def memoize(ttl=None, *, key_func=None, maxsize=128):
             cache.set(key, value)
             return value
 
-        wrapper.__wrapped_cache__ = cache
-        wrapper.__cache_stats__ = stats
+        wrapper.__wrapped_cache__ = cache  # type: ignore[attr-defined]
+        wrapper.__cache_stats__ = stats  # type: ignore[attr-defined]
         return wrapper
 
     return decorator
 
 
-def clear_cache(fn):
+def clear_cache(fn: Callable[..., Any]) -> None:
     """Empty the cache and reset counters for a memoized function."""
     if not hasattr(fn, "__wrapped_cache__"):
         raise ValueError(f"{getattr(fn, '__name__', fn)} is not memoized")
-    fn.__wrapped_cache__.clear()
-    fn.__cache_stats__["hits"] = 0
-    fn.__cache_stats__["misses"] = 0
+    fn.__wrapped_cache__.clear()  # type: ignore[union-attr]
+    fn.__cache_stats__["hits"] = 0  # type: ignore[union-attr]
+    fn.__cache_stats__["misses"] = 0  # type: ignore[union-attr]
 
 
-def cache_info(fn):
+def cache_info(fn: Callable[..., Any]) -> Dict[str, int]:
     """Return hit/miss counters and sizing for a function.
 
     Non-memoized functions report all zeros.
@@ -119,8 +130,8 @@ def cache_info(fn):
     if not hasattr(fn, "__wrapped_cache__"):
         return {"hits": 0, "misses": 0, "size": 0, "maxsize": 0}
     return {
-        "hits": fn.__cache_stats__["hits"],
-        "misses": fn.__cache_stats__["misses"],
-        "size": len(fn.__wrapped_cache__),
-        "maxsize": fn.__wrapped_cache__.maxsize,
+        "hits": fn.__cache_stats__["hits"],  # type: ignore[union-attr]
+        "misses": fn.__cache_stats__["misses"],  # type: ignore[union-attr]
+        "size": len(fn.__wrapped_cache__),  # type: ignore[union-attr]
+        "maxsize": fn.__wrapped_cache__.maxsize,  # type: ignore[union-attr]
     }
