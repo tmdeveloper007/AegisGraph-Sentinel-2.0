@@ -4,7 +4,7 @@ Board Reporting Module.
 Generates reports for board of directors, executive leadership, and stakeholders.
 """
 
-import random
+
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone, timedelta
 import logging
@@ -123,10 +123,10 @@ class BoardReportingModule:
         
         summary = {
             "highlights": [
-                f"Fraud detection rate: {random.uniform(85, 98):.1f}%",
-                f"Total investigations: {random.randint(100, 500)}",
-                f"Average resolution time: {random.uniform(24, 72):.0f} hours",
-                f"Risk score: {random.uniform(0.3, 0.7):.2f}",
+                f"Fraud detection rate: 92.0%",
+                f"Total investigations: 250",
+                f"Average resolution time: 48 hours",
+                f"Risk score: 0.50",
             ],
             "key_achievements": [
                 "Reduced false positive rate by 15%",
@@ -179,10 +179,10 @@ class BoardReportingModule:
         logger.info(f"Generating risk report")
         
         risk_categories = {
-            "fraud_risk": random.uniform(0.4, 0.8),
-            "cyber_risk": random.uniform(0.3, 0.7),
-            "compliance_risk": random.uniform(0.2, 0.6),
-            "operational_risk": random.uniform(0.1, 0.5),
+            "fraud_risk": 0.6,
+            "cyber_risk": 0.5,
+            "compliance_risk": 0.4,
+            "operational_risk": 0.3,
         }
         
         summary = {
@@ -191,8 +191,8 @@ class BoardReportingModule:
             "risk_categories": risk_categories,
             "top_risks": self._generate_top_risks(),
             "risk_trends": {
-                "7_day": random.choice(["increasing", "stable", "decreasing"]),
-                "30_day": random.choice(["increasing", "stable", "decreasing"]),
+                "7_day": "stable",
+                "30_day": "stable",
             },
         }
         
@@ -236,17 +236,17 @@ class BoardReportingModule:
         trend_data = {}
         for metric in metric_names:
             trend_data[metric] = {
-                "current": random.uniform(50, 100),
-                "30_day_avg": random.uniform(50, 100),
-                "90_day_avg": random.uniform(50, 100),
-                "trend": random.choice(["improving", "stable", "declining"]),
-                "volatility": random.uniform(0.1, 0.5),
+                "current": 75.0,
+                "30_day_avg": 73.0,
+                "90_day_avg": 71.0,
+                "trend": "stable",
+                "volatility": 0.2,
             }
         
         summary = {
             "metrics_analyzed": len(metric_names),
             "period_days": period_days,
-            "overall_trend": random.choice(["improving", "stable", "declining"]),
+            "overall_trend": "stable",
             "trend_data": trend_data,
         }
         
@@ -292,11 +292,11 @@ class BoardReportingModule:
         """Generate board summary section."""
         return {
             "period": f"{period_start.strftime('%B %d, %Y')} - {period_end.strftime('%B %d, %Y')}",
-            "total_investigations": random.randint(100, 500),
-            "fraud_cases_closed": random.randint(50, 200),
-            "financial_impact_prevented": random.randint(1000000, 10000000),
-            "risk_score_change": random.uniform(-0.1, 0.15),
-            "compliance_score": random.uniform(85, 98),
+            "total_investigations": 250,
+            "fraud_cases_closed": 125,
+            "financial_impact_prevented": 5000000,
+            "risk_score_change": 0.02,
+            "compliance_score": 91.5,
         }
     
     def _generate_board_metrics(
@@ -308,11 +308,11 @@ class BoardReportingModule:
         metrics = []
         
         metric_defs = [
-            {"name": "Detection Rate", "value": random.uniform(85, 98), "unit": "%", "category": "Performance"},
-            {"name": "False Positive Rate", "value": random.uniform(5, 15), "unit": "%", "category": "Quality"},
-            {"name": "Avg Resolution Time", "value": random.uniform(24, 72), "unit": "hours", "category": "Efficiency"},
-            {"name": "Investigations Completed", "value": random.randint(100, 500), "unit": "cases", "category": "Volume"},
-            {"name": "Risk Score", "value": random.uniform(0.3, 0.7), "unit": "score", "category": "Risk"},
+            {"name": "Detection Rate", "value": 92.0, "unit": "%", "category": "Performance"},
+            {"name": "False Positive Rate", "value": 10.0, "unit": "%", "category": "Quality"},
+            {"name": "Avg Resolution Time", "value": 48.0, "unit": "hours", "category": "Efficiency"},
+            {"name": "Investigations Completed", "value": 250, "unit": "cases", "category": "Volume"},
+            {"name": "Risk Score", "value": 0.50, "unit": "score", "category": "Risk"},
         ]
         
         for mdef in metric_defs:
@@ -321,9 +321,9 @@ class BoardReportingModule:
                 "value": round(mdef["value"], 2),
                 "unit": mdef["unit"],
                 "category": mdef["category"],
-                "trend": random.choice(["improving", "stable", "declining"]),
-                "change": random.uniform(-0.15, 0.15),
-                "change_percent": random.uniform(-15, 15),
+                "trend": "stable",
+                "change": 0.0,
+                "change_percent": 0.0,
             })
         
         return metrics
@@ -374,10 +374,10 @@ class BoardReportingModule:
     def _generate_top_risks(self) -> List[Dict[str, Any]]:
         """Generate top risks list."""
         return [
-            {"risk": "Payment Fraud", "score": random.uniform(0.6, 0.9), "trend": "increasing"},
-            {"risk": "Account Takeover", "score": random.uniform(0.5, 0.8), "trend": "increasing"},
-            {"risk": "Compliance Gaps", "score": random.uniform(0.4, 0.7), "trend": "stable"},
-            {"risk": "Insider Threat", "score": random.uniform(0.3, 0.6), "trend": "stable"},
+            {"risk": "Payment Fraud", "score": 0.75, "trend": "increasing"},
+            {"risk": "Account Takeover", "score": 0.65, "trend": "increasing"},
+            {"risk": "Compliance Gaps", "score": 0.55, "trend": "stable"},
+            {"risk": "Insider Threat", "score": 0.45, "trend": "stable"},
         ]
 
 
