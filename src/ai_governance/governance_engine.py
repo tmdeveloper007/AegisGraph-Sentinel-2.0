@@ -5,7 +5,7 @@ Security, drift detection, bias detection, and explainability.
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
-import random
+
 
 from .models import (
     Model,
@@ -83,14 +83,14 @@ class DriftDetectionEngine:
             baseline_keys.update(item.keys())
         
         if current_keys == baseline_keys:
-            return random.uniform(0.1, 0.3)
+            return 0.0
         
         missing_keys = baseline_keys - current_keys
         extra_keys = current_keys - baseline_keys
         
         key_drift = (len(missing_keys) + len(extra_keys)) / max(1, len(current_keys | baseline_keys))
         
-        return min(1.0, key_drift + random.uniform(0.1, 0.3))
+        return min(1.0, key_drift)
     
     def get_drift_history(self, model_id: str) -> List[ModelDrift]:
         """Get drift history for a model."""
@@ -141,16 +141,23 @@ class BiasDetectionEngine:
         protected_attributes: List[str],
     ) -> BiasReport:
         """Evaluate a specific bias metric."""
-        score = random.uniform(0.0, 1.0)
-        threshold = 0.8
+        # Derive a deterministic bias score from prediction data.
+        if predictions and protected_attributes:
+            protected_vals = [p.get(protected_attributes[0]) for p in predictions if protected_attributes[0] in p]
+            positive_count = sum(1 for v in protected_vals if v)
+            overall_rate = positive_count / max(1, len(protected_vals))
+            threshold = 0.8
+            score = min(1.0, abs(0.5 - overall_rate) * 2 + 0.1)
+        else:
+            threshold = 0.8
+            score = 0.5
         
         is_fair = score >= threshold
         
         affected = []
-        if not is_fair:
-            for attr in protected_attributes:
-                if random.random() > 0.5:
-                    affected.append(attr)
+        if not is_fair and protected_attributes:
+            # Deterministically mark the first protected attribute as affected when biased.
+            affected = [protected_attributes[0]]
         
         return BiasReport(
             report_id=str(uuid4()),
@@ -200,7 +207,7 @@ class ExplainabilityEngine:
             prediction_id=prediction_id,
             feature_importance=feature_importance,
             explanation_method="SHAP",
-            confidence=random.uniform(0.7, 0.99),
+            confidence=0.9,
         )
         
         if model_id not in self.explanations:
