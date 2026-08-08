@@ -4,7 +4,7 @@ Data Warehouse Module.
 Provides analytical data layer, data cubes, and aggregation capabilities.
 """
 
-import random
+
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone, timedelta
 import logging
@@ -62,7 +62,7 @@ class DataWarehouseModule:
             name=name,
             dimensions=dimensions,
             measures=measures,
-            facts=random.randint(1000, 100000),
+            facts=0,
             aggregations=self._generate_aggregations(dimensions, measures),
         )
         
@@ -83,7 +83,7 @@ class DataWarehouseModule:
                     "type": AggregationType.SUM.value,
                     "dimension": dim,
                     "measure": measure,
-                    "value": random.uniform(1000, 100000),
+                    "value": 0.0,
                 }
         
         return aggregations
@@ -114,21 +114,21 @@ class DataWarehouseModule:
         measures = measures or ["count"]
         filters = filters or {}
         
-        # Generate sample results
+        # Generate sample results deterministically
         results = []
-        for i in range(random.randint(5, 20)):
+        for i in range(5):
             row = {"row_id": i}
             row.update(dimensions)
             
             for measure in measures:
                 if aggregation == AggregationType.AVG:
-                    row[measure] = random.uniform(50, 200)
+                    row[measure] = 100.0
                 elif aggregation == AggregationType.SUM:
-                    row[measure] = random.uniform(1000, 50000)
+                    row[measure] = 10000.0
                 elif aggregation == AggregationType.COUNT:
-                    row[measure] = random.randint(10, 1000)
+                    row[measure] = 100
                 else:
-                    row[measure] = random.uniform(0, 100)
+                    row[measure] = 50.0
             
             results.append(row)
         
@@ -152,9 +152,9 @@ class DataWarehouseModule:
         
         return {
             "rolled_dimensions": rollup_dimensions,
-            "total_records": random.randint(1000, 100000),
+            "total_records": 0,
             "aggregated_values": {
-                dim: random.uniform(1000, 50000) for dim in rollup_dimensions
+                dim: 0.0 for dim in rollup_dimensions
             },
         }
     
@@ -177,13 +177,13 @@ class DataWarehouseModule:
         logger.info(f"Drilling down cube {cube_name} on {drilldown_dimension}")
         
         results = []
-        for i in range(random.randint(5, 15)):
+        for i in range(5):
             results.append({
                 "dimension": drilldown_dimension,
                 "level": level,
                 "value": f"detail_{i}",
-                "count": random.randint(10, 500),
-                "total": random.uniform(1000, 50000),
+                "count": 0,
+                "total": 0.0,
             })
         
         return results
@@ -209,8 +209,8 @@ class DataWarehouseModule:
         return {
             "sliced_dimension": dimension,
             "slice_value": value,
-            "record_count": random.randint(100, 5000),
-            "total": random.uniform(10000, 500000),
+            "record_count": 0,
+            "total": 0.0,
         }
     
     def define_metric(
@@ -314,7 +314,7 @@ class DataWarehouseModule:
                 timestamp = start_time + timedelta(days=i)
                 data.append({
                     "timestamp": timestamp.isoformat(),
-                    "value": random.uniform(50, 150),
+                    "value": 100.0,
                 })
             return data
         
