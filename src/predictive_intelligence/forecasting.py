@@ -5,7 +5,6 @@ Forecasts future risk scores and trends for entities.
 """
 
 import time
-import random
 import threading
 from threading import Lock
 from typing import Dict, List, Optional, Any
@@ -63,9 +62,9 @@ class RiskForecaster:
         
         multiplier = period_multipliers.get(period, 0.3)
         
-        # Add some randomness for realistic forecasting
-        volatility = random.uniform(0.05, 0.15)
-        predicted_risk = min(current_risk + (current_risk * multiplier * random.uniform(0.5, 1.5)), 1.0)
+        # Deterministic volatility for forecasting
+        volatility = 0.1
+        predicted_risk = min(current_risk + (current_risk * multiplier * 1.0), 1.0)
         
         # Generate risk factors
         factors = [
@@ -76,13 +75,13 @@ class RiskForecaster:
             },
             {
                 "factor": "connection_risk",
-                "contribution": predicted_risk * random.uniform(0.1, 0.3),
-                "direction": random.choice(["INCREASING", "STABLE"]),
+                "contribution": predicted_risk * 0.2,
+                "direction": "INCREASING" if predicted_risk > current_risk else "STABLE",
             },
             {
                 "factor": "activity_pattern",
-                "contribution": predicted_risk * random.uniform(0.1, 0.2),
-                "direction": random.choice(["INCREASING", "STABLE", "DECREASING"]),
+                "contribution": predicted_risk * 0.15,
+                "direction": "STABLE",
             },
         ]
         
@@ -101,7 +100,7 @@ class RiskForecaster:
             entity_id=entity_id,
             forecast_period=period,
             risk_score=predicted_risk,
-            confidence=random.uniform(0.6, 0.85),
+            confidence=0.75,
             factors=factors,
             recommendations=recommendations,
             metadata={"period_multiplier": multiplier, "volatility": volatility},
@@ -123,20 +122,19 @@ class RiskForecaster:
         Returns:
             RiskForecast with trend analysis
         """
-        # Determine trend direction
-        trend_random = random.random()
-        if trend_random < 0.3:
+        # Determine trend direction deterministically from current risk
+        if current_risk > 0.7:
             trend = "DECREASING"
-            predicted_risk = max(current_risk * random.uniform(0.7, 0.9), 0.0)
+            predicted_risk = max(current_risk * 0.8, 0.0)
             time_to_peak = None
-        elif trend_random < 0.7:
+        elif current_risk > 0.4:
             trend = "STABLE"
-            predicted_risk = current_risk * random.uniform(0.95, 1.05)
+            predicted_risk = current_risk * 1.0
             time_to_peak = None
         else:
             trend = "INCREASING"
-            predicted_risk = min(current_risk * random.uniform(1.1, 1.5), 1.0)
-            time_to_peak = f"{random.randint(1, 14)} days"
+            predicted_risk = min(current_risk * 1.3, 1.0)
+            time_to_peak = "7 days"
         
         forecast = RiskForecast(
             entity_id=entity_id,
@@ -144,7 +142,7 @@ class RiskForecaster:
             predicted_risk=predicted_risk,
             risk_trend=trend,
             time_to_peak=time_to_peak,
-            confidence=random.uniform(0.6, 0.85),
+            confidence=0.75,
         )
         
         # Store forecast
