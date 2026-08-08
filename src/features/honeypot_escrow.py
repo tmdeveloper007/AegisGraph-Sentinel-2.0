@@ -29,7 +29,7 @@ import threading
 from collections import deque
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import uuid
 import secrets
@@ -133,7 +133,7 @@ class HoneypotEscrowManager:
         
         # Daily statistics for realtime monitoring
         self.daily_stats = {
-            'date': datetime.now().date(),
+            'date': datetime.now(timezone.utc).date(),
             'arrests': 0,
             'recovered': 0.0,
         }
@@ -195,7 +195,7 @@ class HoneypotEscrowManager:
         honeypot_id = f"HP_{secrets.token_hex(6).upper()}"
         escrow_account = f"{self.escrow_prefix}{secrets.token_hex(8).upper()}"
         
-        activation_time = datetime.now()
+        activation_time = datetime.now(timezone.utc)
         auto_release_time = activation_time + timedelta(hours=self.auto_release_hours)
         
         honeypot = HoneypotTransaction(
@@ -269,7 +269,7 @@ class HoneypotEscrowManager:
         
         # Record attempt
         attempt = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'type': withdrawal_type,
             'amount': amount,
             'location': location,
@@ -424,7 +424,7 @@ class HoneypotEscrowManager:
         Check and auto-release honeypots past their timeout
         Called periodically by background task
         """
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         with self._lock:
             to_release = [
                 hp_id
@@ -500,7 +500,7 @@ class HoneypotEscrowManager:
         """Generate police alert for withdrawal attempt"""
         alert = {
             'alert_id': f"ALERT_{secrets.token_hex(4).upper()}",
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'priority': 'CRITICAL',
             'honeypot_id': honeypot.honeypot_id,
             'mule_account': honeypot.target_account,
@@ -542,7 +542,7 @@ class HoneypotEscrowManager:
     
     def _check_daily_reset(self):
         """Reset daily statistics if 24 hours have elapsed."""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         if self.daily_stats['date'] != today:
             self.daily_stats['date'] = today
             self.daily_stats['arrests'] = 0
@@ -582,7 +582,7 @@ class HoneypotEscrowManager:
         with self._lock:
             honeypots = list(self.active_honeypots.values())
         for hp in honeypots:
-            time_remaining_secs = max(0, (hp.auto_release_time - datetime.now()).total_seconds())
+            time_remaining_secs = max(0, (hp.auto_release_time - datetime.now(timezone.utc)).total_seconds())
             
             # Determine location from last withdrawal attempt
             last_location = None
