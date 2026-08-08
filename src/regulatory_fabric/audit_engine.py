@@ -235,7 +235,7 @@ class AuditAutomationEngine:
         
         # Calculate summary statistics
         total_controls = len(plan.scope)
-        passed = len([a for a in assessments if a.get("controls_passed", 0) > 0])
+        passed = len([a for a in assessments if a.get("controls_failed", 0) == 0 and a.get("controls_tested", 0) > 0])
         failed = len([a for a in assessments if a.get("controls_failed", 0) > 0])
         
         return {
