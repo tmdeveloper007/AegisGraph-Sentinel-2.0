@@ -4,7 +4,6 @@ SHAP Explainer Module.
 SHAP (SHapley Additive exPlanations) implementation for model explanations.
 """
 
-import random
 import math
 from typing import Callable, Dict, List, Optional, Any
 from datetime import datetime, timezone
@@ -124,8 +123,8 @@ class SHAPExplainer:
             # Approximate marginal contribution
             weight = 1.0 / (i + 1)  # Earlier features get higher weight
             
-            # Add some randomness to simulate actual SHAP computation
-            contribution = remaining_diff * weight * random.uniform(0.8, 1.2)
+            # Compute deterministic marginal contribution
+            contribution = remaining_diff * weight
             
             # Ensure we don't overshoot
             if i == len(sorted_features) - 1:
@@ -137,7 +136,7 @@ class SHAPExplainer:
                 feature=feature,
                 importance=contribution,
                 direction="positive" if contribution > 0 else "negative",
-                confidence=random.uniform(0.85, 0.99),
+                confidence=0.9,
             )
             feature_importances.append(importance)
         
@@ -241,7 +240,7 @@ class SHAPExplainer:
         if not explanations:
             # Return default importance
             return [
-                FeatureImportance(feature=f"feature_{i}", importance=random.uniform(0.1, 0.3))
+                FeatureImportance(feature=f"feature_{i}", importance=1.0 / (i + 1))
                 for i in range(5)
             ]
         
