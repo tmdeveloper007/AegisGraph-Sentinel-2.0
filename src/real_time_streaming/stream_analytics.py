@@ -4,7 +4,6 @@ Stream Analytics Module.
 Real-time analytics over streams, pattern detection, and anomaly detection.
 """
 
-import random
 import math
 import threading
 from threading import Lock
@@ -157,11 +156,11 @@ class StreamAnalytics:
         # Calculate metrics
         total_events = self._store.get_stream_count(stream_name)
         
-        # Simulate events per second
-        events_per_second = random.uniform(10, 1000)
+        # Derive events per second from actual event count
+        events_per_second = float(total_events) / max(1, 300.0)  # events per second over 5 min window
         
-        # Calculate average latency
-        latencies = [e.payload.get("latency_ms", random.uniform(1, 100)) for e in events[-100:]]
+        # Calculate average latency from actual payload data
+        latencies = [e.payload.get("latency_ms", 10.0) for e in events[-100:]]
         avg_latency = sum(latencies) / len(latencies) if latencies else 0
         
         # Queue depth
