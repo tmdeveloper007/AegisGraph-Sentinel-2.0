@@ -749,7 +749,8 @@ class AuthService:
             success=True,
             user_id=record.user_id,
             organization_id=record.organization_id,
-            role="member",
+            role=record.role,
+            scopes=getattr(record, 'scopes', None),
             provider=AuthProvider.API_KEY,
         )
 
