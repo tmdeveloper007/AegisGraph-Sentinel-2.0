@@ -183,10 +183,10 @@ class LineageService:
         expected_count = chain.total_depth + 1
         actual_count = len(chain.records)
 
-        if actual_count >= expected_count:
+        if actual_count == expected_count:
             return 1.0
 
-        return actual_count / expected_count if expected_count > 0 else 1.0
+        return actual_count / expected_count if expected_count > 0 else 0.0
 
     def build_dependency_graph(
         self,

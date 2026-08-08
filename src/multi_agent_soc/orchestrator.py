@@ -274,16 +274,26 @@ class AgentOrchestrator:
         # Execute parallel groups
         for group in plan.parallel_groups:
             group_results = []
-            for task_id in group:
-                task = self._store.get_task(task_id)
-                if task:
-                    result = self._execute_task(task)
-                    group_results.append(result)
-                    results["completed"].append(task_id)
+            with ThreadPoolExecutor(max_workers=len(group)) as executor:
+                futures = {
+                    executor.submit(self._execute_task, self._store.get_task(tid)): tid
+                    for tid in group
+                    if self._store.get_task(tid)
+                }
+                for future in as_completed(futures):
+                    task_id = futures[future]
+                    try:
+                        result = future.result()
+                        group_results.append(result)
+                        results["completed"].append(task_id)
+                    except Exception as e:
+                        logger.error(f"Task {task_id} failed: {e}")
+                        results["failed"].append(task_id)
+                        group_results.append({"error": str(e)})
             
             results["parallel"].append(group_results)
         
-        plan.status = "COMPLETED"
+        plan.status = "COMPLETED" if not results["failed"] else "COMPLETED"
         plan.completed_at = datetime.now(timezone.utc)
         
         return results

@@ -257,17 +257,77 @@ class PipelineExecutor:
         job = self._store.get_job(job_id)
         if not job:
             raise ValueError(f"Job {job_id} not found")
-        
+
         # Create new job based on original
         new_job = PipelineJob(
             pipeline_id=job.pipeline_id,
             status=JobStatus.PENDING,
         )
-        
+
         self._store.store_job(new_job)
-        
-        # Execute
-        return self.execute(job.pipeline_id)
+
+        # Execute the new job, not the original
+        return self._execute_job(new_job)
+
+    def _execute_job(self, job: PipelineJob) -> PipelineJob:
+        """Execute an already-created job and update its status."""
+        from .pipeline_builder import PipelineBuilder
+
+        builder = PipelineBuilder(store=self._store)
+        pipeline = builder.get_pipeline(job.pipeline_id)
+
+        if not pipeline:
+            job.status = JobStatus.FAILED
+            job.error_message = f"Pipeline {job.pipeline_id} not found"
+            job.completed_at = datetime.now(timezone.utc)
+            self._store.store_job(job)
+            return job
+
+        job.status = JobStatus.RUNNING
+        job.started_at = datetime.now(timezone.utc)
+        self._store.store_job(job)
+
+        try:
+            data = self._generate_sample_data()
+            records_in = len(data)
+            records_processed = 0
+            records_failed = 0
+
+            for stage in pipeline.stages:
+                stage_type = stage.get("type")
+                stage_config = stage.get("config", {})
+                job.logs.append(f"Stage {stage_type} started")
+                data, records_processed, stage_failed = self._execute_stage(
+                    stage_type, stage_config, data
+                )
+                records_failed += stage_failed
+                job.logs.append(f"Stage {stage_type} completed")
+
+            job.status = JobStatus.COMPLETED
+            job.completed_at = datetime.now(timezone.utc)
+            job.records_processed = records_processed
+            job.records_failed = records_failed
+
+            duration = (job.completed_at - job.started_at).total_seconds()
+            metrics = PipelineMetrics(
+                pipeline_id=job.pipeline_id,
+                job_id=job.job_id,
+                records_in=records_in,
+                records_out=records_processed,
+                records_failed=records_failed,
+                duration_seconds=duration,
+                throughput_per_second=records_processed / duration if duration > 0 else 0,
+            )
+            self._store.store_metrics(metrics)
+
+        except Exception as e:
+            job.status = JobStatus.FAILED
+            job.completed_at = datetime.now(timezone.utc)
+            job.error_message = str(e)
+            job.logs.append(f"Error: {str(e)}")
+
+        self._store.store_job(job)
+        return job
     
     def get_job_metrics(self, job_id: str) -> Optional[PipelineMetrics]:
         """Get metrics for a job."""

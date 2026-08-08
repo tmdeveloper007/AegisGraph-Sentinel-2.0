@@ -57,6 +57,20 @@ def _require_org_access(org_id: str, current_user: dict) -> None:
         )
 
 
+def _require_org_admin(org_id: str, current_user: dict) -> None:
+    """Raise HTTP 403 if the caller is not an admin or owner of the organization."""
+    if current_user.get("organization_id") != org_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: you do not have permission to access this organization.",
+        )
+    if current_user.get("role") not in ("admin", "owner"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: organization admin or owner role required.",
+        )
+
+
 @router.post("/", response_model=OrganizationResponse, status_code=status.HTTP_201_CREATED)
 async def create_organization(
     data: OrganizationCreate,
@@ -156,7 +170,13 @@ async def invite_member(
     current_user: dict = Depends(get_current_user),
 ):
     """Invite a new member to organization"""
-    _require_org_access(org_id, current_user)
+    _require_org_admin(org_id, current_user)
+
+    if role not in ("member", "viewer"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot invite as admin or owner via this endpoint.",
+        )
 
     return {
         "invitation_id": str(uuid.uuid4()),
@@ -223,7 +243,7 @@ async def update_organization_settings(
     current_user: dict = Depends(get_current_user),
 ):
     """Update organization settings"""
-    _require_org_access(org_id, current_user)
+    _require_org_admin(org_id, current_user)
 
     return {
         "success": True,

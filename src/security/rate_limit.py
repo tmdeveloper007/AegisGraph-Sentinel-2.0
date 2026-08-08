@@ -187,9 +187,9 @@ def check_rate_limit(
     except Exception as exc:
         _log_backend_unavailable(exc)
         return RateLimitDecision(
-            allowed=True,
-            retry_after_seconds=0,
-            remaining_tokens=float(capacity),
+            allowed=False,
+            retry_after_seconds=60,
+            remaining_tokens=0.0,
         )
 
 
