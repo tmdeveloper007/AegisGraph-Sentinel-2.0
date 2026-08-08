@@ -5,7 +5,7 @@ AI-powered security research laboratory.
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
-import random
+
 
 from .models import (
     ResearchExperiment,
@@ -167,10 +167,10 @@ class ModelEvaluationService:
         evaluation_id = str(uuid4())
         
         metrics = {
-            "accuracy": test_results.get("accuracy", random.uniform(0.7, 0.95)),
-            "precision": test_results.get("precision", random.uniform(0.6, 0.95)),
-            "recall": test_results.get("recall", random.uniform(0.6, 0.95)),
-            "f1_score": test_results.get("f1", random.uniform(0.6, 0.95)),
+            "accuracy": test_results.get("accuracy", 0.85),
+            "precision": test_results.get("precision", 0.80),
+            "recall": test_results.get("recall", 0.80),
+            "f1_score": test_results.get("f1", 0.80),
         }
         
         performance_score = sum(metrics.values()) / len(metrics)
@@ -300,9 +300,9 @@ class ResearchEngine:
         self.experiment_manager.start_experiment(experiment_id)
         
         results = {
-            "training_accuracy": random.uniform(0.85, 0.98),
-            "validation_accuracy": random.uniform(0.80, 0.95),
-            "training_loss": random.uniform(0.01, 0.1),
+            "training_accuracy": 0.90,
+            "validation_accuracy": 0.87,
+            "training_loss": 0.05,
             "epochs_completed": parameters.get("epochs", 10),
         }
         
