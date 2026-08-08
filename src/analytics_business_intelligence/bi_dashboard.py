@@ -4,7 +4,7 @@ Business Intelligence Dashboard Module.
 Provides BI dashboards, charts, and visualization capabilities.
 """
 
-import random
+
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 import logging
@@ -202,26 +202,26 @@ class BIDashboardModule:
         points = 30
         
         data = []
-        for _ in range(series_count):
-            series = [random.uniform(20, 100) for _ in range(points)]
+        for idx in range(series_count):
+            series = [20.0 + (idx + 1) * (80.0 / points) * i for i in range(points)]
             data.append(series)
         
         return data
     
     def _generate_bar_data(self, chart: BIChart) -> List[float]:
         """Generate bar chart data."""
-        return [random.uniform(50, 200) for _ in range(12)]
+        return [50.0 + i * (150.0 / 12) for i in range(12)]
     
     def _generate_pie_data(self, chart: BIChart) -> List[float]:
         """Generate pie chart data."""
-        values = [random.uniform(10, 40) for _ in range(5)]
+        values = [10.0 + i * 7.5 for i in range(5)]
         total = sum(values)
         return [v / total * 100 for v in values]
     
     def _generate_generic_data(self, chart: BIChart) -> List[Dict[str, Any]]:
         """Generate generic chart data."""
         return [
-            {"label": f"Item {i}", "value": random.uniform(10, 100)}
+            {"label": f"Item {i}", "value": 10.0 + i * 10.0}
             for i in range(10)
         ]
     
@@ -274,10 +274,10 @@ class BIDashboardModule:
                 kpi_data.append({
                     "kpi_id": kpi.kpi_id,
                     "name": kpi.name,
-                    "current_value": kpi.current_value or random.uniform(50, 150),
+                    "current_value": kpi.current_value if kpi.current_value is not None else 0.0,
                     "target_value": kpi.target_value,
                     "status": kpi.status,
-                    "change_percent": kpi.change_percent or random.uniform(-10, 10),
+                    "change_percent": kpi.change_percent if kpi.change_percent is not None else 0.0,
                 })
         
         return {
