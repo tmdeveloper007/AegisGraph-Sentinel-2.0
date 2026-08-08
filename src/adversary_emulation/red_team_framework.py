@@ -1,6 +1,10 @@
 """Red Team Framework Module
 
-Framework for evaluating adversary tactics and techniques during red team exercises.
+Framework for evaluating
+"""
+from typing import List
+
+ adversary tactics and techniques during red team exercises.
 """
 
 
