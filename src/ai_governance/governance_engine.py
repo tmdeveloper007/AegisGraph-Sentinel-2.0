@@ -5,7 +5,7 @@ Security, drift detection, bias detection, and explainability.
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
-import random
+import math
 
 from .models import (
     Model,
@@ -83,14 +83,33 @@ class DriftDetectionEngine:
             baseline_keys.update(item.keys())
         
         if current_keys == baseline_keys:
-            return random.uniform(0.1, 0.3)
+            # Schemas match — compute PSI-like drift on numeric features
+            numeric_keys = [
+                k for k in current_keys
+                if all(isinstance(item.get(k), (int, float)) for item in current_data + baseline_data)
+            ]
+            if numeric_keys and len(current_data) > 1 and len(baseline_data) > 1:
+                drift_scores = []
+                for key in numeric_keys:
+                    curr_vals = [item.get(key, 0) for item in current_data if isinstance(item.get(key), (int, float))]
+                    base_vals = [item.get(key, 0) for item in baseline_data if isinstance(item.get(key), (int, float))]
+                    if curr_vals and base_vals:
+                        curr_mean = sum(curr_vals) / len(curr_vals)
+                        base_mean = sum(base_vals) / len(base_vals)
+                        curr_std = math.sqrt(sum((v - curr_mean) ** 2 for v in curr_vals) / len(curr_vals)) if len(curr_vals) > 1 else 1
+                        base_std = math.sqrt(sum((v - base_mean) ** 2 for v in base_vals) / len(base_vals)) if len(base_vals) > 1 else 1
+                        if base_mean > 0:
+                            drift_scores.append(min(1.0, abs(curr_mean - base_mean) / (abs(base_mean) + 1e-6)))
+                if drift_scores:
+                    return min(1.0, sum(drift_scores) / len(drift_scores))
+            return 0.0
         
         missing_keys = baseline_keys - current_keys
         extra_keys = current_keys - baseline_keys
         
         key_drift = (len(missing_keys) + len(extra_keys)) / max(1, len(current_keys | baseline_keys))
         
-        return min(1.0, key_drift + random.uniform(0.1, 0.3))
+        return min(1.0, key_drift)
     
     def get_drift_history(self, model_id: str) -> List[ModelDrift]:
         """Get drift history for a model."""
@@ -140,17 +159,17 @@ class BiasDetectionEngine:
         predictions: List[Dict[str, Any]],
         protected_attributes: List[str],
     ) -> BiasReport:
-        """Evaluate a specific bias metric."""
-        score = random.uniform(0.0, 1.0)
+        """Evaluate a specific bias metric using actual prediction data."""
         threshold = 0.8
         
+        # Compute real fairness score from predictions
+        score = self._compute_fairness_score(predictions, protected_attributes, metric)
         is_fair = score >= threshold
         
-        affected = []
-        if not is_fair:
-            for attr in protected_attributes:
-                if random.random() > 0.5:
-                    affected.append(attr)
+        affected = [
+            attr for attr in protected_attributes
+            if self._compute_attr_disparity(predictions, attr, metric) < threshold
+        ]
         
         return BiasReport(
             report_id=str(uuid4()),
@@ -161,6 +180,47 @@ class BiasDetectionEngine:
             is_fair=is_fair,
             affected_groups=affected,
         )
+
+    def _compute_fairness_score(
+        self,
+        predictions: List[Dict[str, Any]],
+        protected_attributes: List[str],
+        metric: BiasMetric,
+    ) -> float:
+        """Compute fairness score from actual prediction outcomes."""
+        if not predictions or not protected_attributes:
+            return 0.8  # Default fair score
+        
+        attr = protected_attributes[0]
+        group_a = [p for p in predictions if p.get(attr) in (True, "A", "group_a", "1")]
+        group_b = [p for p in predictions if p.get(attr) not in (True, "A", "group_a", "1")]
+        
+        if not group_a or not group_b:
+            return 0.8
+        
+        def positive_rate(group):
+            return sum(1 for p in group if p.get("outcome") or p.get("prediction")) / len(group) if group else 0
+        
+        rate_a = positive_rate(group_a)
+        rate_b = positive_rate(group_b)
+        
+        if metric.value == "DEMOGRAPHIC_PARITY":
+            # Ratio of positive rates (1.0 = perfect parity)
+            return min(1.0, min(rate_a, rate_b) / max(rate_a, rate_b)) if max(rate_a, rate_b) > 0 else 0.8
+        elif metric.value == "EQUALIZED_ODDS":
+            return 1.0 - abs(rate_a - rate_b)
+        else:
+            # Generic: 1 - |rate_a - rate_b|
+            return max(0.0, 1.0 - abs(rate_a - rate_b))
+    
+    def _compute_attr_disparity(
+        self,
+        predictions: List[Dict[str, Any]],
+        attr: str,
+        metric: BiasMetric,
+    ) -> float:
+        """Compute disparity for a single protected attribute."""
+        return self._compute_fairness_score(predictions, [attr], metric)
     
     def get_bias_reports(self, model_id: str) -> List[BiasReport]:
         """Get all bias reports for a model."""
