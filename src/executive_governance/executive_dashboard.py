@@ -238,101 +238,31 @@ class ExecutiveDashboardModule:
         }
     
     def _generate_key_metrics(self) -> List[BoardMetric]:
-        """Generate key board metrics from governance store data."""
-        import hashlib
+        """Generate key board metrics."""
         metrics = []
-
-        risk_entities = (
-            list(self._store._risk_entities.values())
-            if hasattr(self._store, "_risk_entities")
-            else []
-        )
-        findings = (
-            list(self._store._findings.values())
-            if hasattr(self._store, "_findings")
-            else []
-        )
-        cases = (
-            list(self._store._cases.values())
-            if hasattr(self._store, "_cases")
-            else []
-        )
-
-        # Derive metric values from store data
-        risk_score = (
-            sum(e.get("risk_score", 0) for e in risk_entities) / max(1, len(risk_entities))
-        )
-        compliance_rate = (
-            100.0
-            - (sum(1 for f in findings if f.status != "CLOSED") / max(1, len(findings)) * 100)
-        )
-        detection_rate = (
-            sum(1 for c in cases if c.get("status") == "resolved") / max(1, len(cases)) * 100
-            if cases else 95.0
-        )
-
+        
         metric_definitions = [
-            {
-                "category": "Risk",
-                "name": "Overall Risk Score",
-                "target": 0.3,
-                "current": risk_score if risk_entities else 0.3,
-                "trend_seed": 0,
-            },
-            {
-                "category": "Compliance",
-                "name": "Compliance Rate",
-                "target": 95.0,
-                "current": compliance_rate if findings else 95.0,
-                "trend_seed": 1,
-            },
-            {
-                "category": "Performance",
-                "name": "Detection Rate",
-                "target": 95.0,
-                "current": detection_rate,
-                "trend_seed": 2,
-            },
-            {
-                "category": "Efficiency",
-                "name": "Resolution Time (hrs)",
-                "target": 48.0,
-                "current": 48.0,
-                "trend_seed": 3,
-            },
-            {
-                "category": "Quality",
-                "name": "False Positive Rate",
-                "target": 10.0,
-                "current": 10.0,
-                "trend_seed": 4,
-            },
+            {"category": "Risk", "name": "Overall Risk Score", "target": 0.3},
+            {"category": "Compliance", "name": "Compliance Rate", "target": 95.0},
+            {"category": "Performance", "name": "Detection Rate", "target": 95.0},
+            {"category": "Efficiency", "name": "Resolution Time (hrs)", "target": 48.0},
+            {"category": "Quality", "name": "False Positive Rate", "target": 10.0},
         ]
-
-        trends = ["improving", "stable", "declining"]
-
+        
         for defn in metric_definitions:
-            current = defn["current"]
-            variance = (
-                ((current - defn["target"]) / defn["target"]) * 100
-                if defn["target"] != 0
-                else 0
-            )
-            h = hashlib.md5(f"{defn['name']}_trend".encode()).digest()[0]
-            trend = trends[h % 3]
-
-            metrics.append(
-                BoardMetric(
-                    category=defn["category"],
-                    metric_name=defn["name"],
-                    current_value=round(current, 2),
-                    target_value=defn["target"],
-                    variance=round(variance, 2),
-                    trend=trend,
-                    period="current_month",
-                )
-            )
-
+            current = defn["target"] + random.uniform(-0.2, 0.2) * defn["target"]
+            variance = ((current - defn["target"]) / defn["target"]) * 100
+            
+            metrics.append(BoardMetric(
+                category=defn["category"],
+                metric_name=defn["name"],
+                current_value=round(current, 2),
+                target_value=defn["target"],
+                variance=round(variance, 2),
+                trend=random.choice(["improving", "stable", "declining"]),
+                period="current_month",
+            ))
+        
         return metrics
     
     def _generate_alerts(self) -> List[Dict[str, Any]]:
