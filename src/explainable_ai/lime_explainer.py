@@ -4,6 +4,7 @@ LIME Explainer Module.
 LIME (Local Interpretable Model-agnostic Explanations) implementation.
 """
 
+import random
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 import logging
@@ -94,19 +95,14 @@ class LIMEExplainer:
         features: Dict[str, float],
         prediction: float,
     ) -> Dict[str, float]:
-        """Compute LIME weights using deterministic perturbation and locally weighted regression."""
-        import math
+        """Compute LIME weights using perturbation and locally weighted regression."""
         weights = {}
         
         for feature, value in features.items():
-            # Generate deterministic perturbations using sinusoidal sampling
-            # instead of random to ensure reproducibility
+            # Simulate perturbation
             perturbations = []
-            n_samples = self._num_samples // max(1, len(features))
-            for i in range(n_samples):
-                # Use cosine perturbation for deterministic variation around original value
-                phase = (i / n_samples) * 2 * math.pi
-                perturbed_value = value * (0.5 + 0.5 * abs(math.cos(phase)))
+            for _ in range(self._num_samples // len(features)):
+                perturbed_value = value * random.uniform(0.5, 1.5)
                 perturbations.append(perturbed_value)
             
             # Compute local weight based on proximity
@@ -122,8 +118,8 @@ class LIMEExplainer:
                 for p, ps in zip(perturbations, proximity_scores)
             ) / sum(proximity_scores) if proximity_scores else 0
             
-            # Scale by prediction — no random multiplier
-            weights[feature] = weighted_contribution * prediction
+            # Scale by prediction
+            weights[feature] = weighted_contribution * prediction * random.uniform(0.8, 1.2)
         
         return weights
     
