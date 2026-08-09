@@ -4,7 +4,6 @@ Business Intelligence Dashboard Module.
 Provides BI dashboards, charts, and visualization capabilities.
 """
 
-import random
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 import logging
@@ -197,31 +196,62 @@ class BIDashboardModule:
         }
     
     def _generate_line_data(self, chart: BIChart) -> List[List[float]]:
-        """Generate line chart data."""
+        """Generate deterministic line chart data based on chart configuration."""
         series_count = len(chart.series) if chart.series else 1
         points = 30
         
         data = []
-        for _ in range(series_count):
-            series = [random.uniform(20, 100) for _ in range(points)]
+        for s_idx in range(series_count):
+            # Generate deterministic values using chart id as seed
+            series = []
+            base = 20.0 + (s_idx * 30.0)
+            for i in range(points):
+                # Use sinusoidal pattern with small variation for realism
+                import math
+                value = base + math.sin(i * 0.3 + s_idx) * 15 + 10
+                series.append(round(value, 2))
             data.append(series)
         
         return data
     
     def _generate_bar_data(self, chart: BIChart) -> List[float]:
-        """Generate bar chart data."""
-        return [random.uniform(50, 200) for _ in range(12)]
+        """Generate deterministic bar chart data based on chart id hash."""
+        import hashlib
+        seed_str = f"{chart.name}_{chart.chart_id}".encode()
+        seed = int(hashlib.md5(seed_str).hexdigest()[:8], 16)
+        
+        values = []
+        for i in range(12):
+            # Deterministic pseudo-random using seed
+            import math
+            val = 50 + (abs(seed * (i + 1) * 2654435761) % 150)
+            values.append(round(val, 2))
+        return values
     
     def _generate_pie_data(self, chart: BIChart) -> List[float]:
-        """Generate pie chart data."""
-        values = [random.uniform(10, 40) for _ in range(5)]
+        """Generate deterministic pie chart data based on chart id."""
+        import hashlib
+        seed_str = f"{chart.name}_{chart.chart_id}".encode()
+        seed = int(hashlib.md5(seed_str).hexdigest()[:8], 16)
+        
+        values = []
+        for i in range(5):
+            val = 10 + (abs(seed * (i + 1) * 2654435761) % 30)
+            values.append(val)
         total = sum(values)
-        return [v / total * 100 for v in values]
+        return [round(v / total * 100, 2) for v in values]
     
     def _generate_generic_data(self, chart: BIChart) -> List[Dict[str, Any]]:
-        """Generate generic chart data."""
+        """Generate deterministic generic chart data."""
+        import hashlib
+        seed_str = f"{chart.name}_{chart.chart_id}".encode()
+        seed = int(hashlib.md5(seed_str).hexdigest()[:8], 16)
+        
         return [
-            {"label": f"Item {i}", "value": random.uniform(10, 100)}
+            {
+                "label": f"Item {i+1}",
+                "value": round(10 + (abs(seed * (i + 1) * 2654435761) % 90), 2),
+            }
             for i in range(10)
         ]
     
@@ -271,13 +301,15 @@ class BIDashboardModule:
         for kpi_id in dashboard.kpis:
             kpi = self._store.get_kpi(kpi_id)
             if kpi:
+                if kpi.current_value is None or kpi.change_percent is None:
+                    logger.warning(f"KPI {kpi.kpi_id} has no stored value; returning None for missing fields")
                 kpi_data.append({
                     "kpi_id": kpi.kpi_id,
                     "name": kpi.name,
-                    "current_value": kpi.current_value or random.uniform(50, 150),
+                    "current_value": kpi.current_value,
                     "target_value": kpi.target_value,
                     "status": kpi.status,
-                    "change_percent": kpi.change_percent or random.uniform(-10, 10),
+                    "change_percent": kpi.change_percent,
                 })
         
         return {
