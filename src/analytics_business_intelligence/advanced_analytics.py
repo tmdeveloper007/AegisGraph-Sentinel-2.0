@@ -137,7 +137,7 @@ class AdvancedAnalyticsModule:
             volatility=round(volatility, 4),
             forecast_values=[round(v, 2) for v in forecast_values],
             confidence_interval=confidence_interval,
-            seasonality_detected=_detect_seasonality(data_points),
+            seasonality_detected=self._detect_seasonality(data_points),
             anomaly_detected=len(anomaly_points) > 0,
             anomaly_points=anomaly_points,
         )
