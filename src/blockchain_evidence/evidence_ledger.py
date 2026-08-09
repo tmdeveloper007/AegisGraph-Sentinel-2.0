@@ -5,7 +5,6 @@ Immutable evidence recording with blockchain verification.
 """
 
 import hashlib
-import random
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone
 import logging
@@ -137,7 +136,10 @@ class EvidenceLedger:
                 block.nonce = nonce
                 return hash_result
         
-        return self._compute_hash(f"{block.merkle_root}{random.randint(0, 999999)}")
+        raise RuntimeError(
+            f"Block mining failed: nonce exhausted after 1000000 attempts "
+            f"for block {block.block_number}"
+        )
     
     def _log_audit(self, evidence_id: str, action: str, user_id: str, details: Dict[str, Any]) -> None:
         """Log audit entry."""
