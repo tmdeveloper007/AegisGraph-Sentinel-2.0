@@ -4,7 +4,6 @@ Data Sources Module.
 Data source connectors and management.
 """
 
-import random
 from typing import Dict, List, Optional, Any, Iterator
 from datetime import datetime, timezone
 import logging
@@ -144,21 +143,43 @@ class DataSourceConnector:
         return self.extract_data(source_id, limit=50)
     
     def test_connection(self, source_id: str) -> Dict[str, Any]:
-        """Test connection to data source."""
+        """Test connection to data source by attempting an actual connection."""
+        import time
         source = self._store.get_source(source_id)
         if not source:
             return {"success": False, "error": "Source not found"}
         
         logger.info(f"Testing connection to {source.name}")
         
-        # Simulate connection test
-        success = random.random() > 0.1  # 90% success rate
+        config = source.connection_config or {}
         
-        return {
-            "success": success,
-            "latency_ms": random.uniform(10, 100) if success else 0,
-            "message": "Connected successfully" if success else "Connection failed",
-        }
+        try:
+            start = time.time()
+            if source.source_type.value == "DATABASE":
+                import sqlite3
+                db_path = config.get("path", ":memory:")
+                conn = sqlite3.connect(db_path, timeout=5.0)
+                conn.execute("SELECT 1")
+                conn.close()
+            elif source.source_type.value == "API":
+                import urllib.request
+                url = config.get("url", "")
+                if url:
+                    req = urllib.request.Request(url, method="HEAD")
+                    urllib.request.urlopen(req, timeout=5.0)
+            latency_ms = (time.time() - start) * 1000
+            return {
+                "success": True,
+                "latency_ms": latency_ms,
+                "message": f"Connected successfully to {source.name}",
+            }
+        except Exception as e:
+            logger.warning(f"Connection test failed for {source.name}: {e}")
+            return {
+                "success": False,
+                "latency_ms": 0,
+                "message": f"Connection failed: {str(e)}",
+            }
 
 
 # Global singleton
