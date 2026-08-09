@@ -4,7 +4,7 @@ Data Warehouse Module.
 Provides analytical data layer, data cubes, and aggregation capabilities.
 """
 
-import hashlib
+import random
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timezone, timedelta
 import logging
@@ -19,21 +19,6 @@ from .models import (
 from .store import AnalyticsStore, get_analytics_store
 
 logger = logging.getLogger(__name__)
-
-
-def _seed(name: str) -> int:
-    """Derive a deterministic integer seed from a string."""
-    return int(hashlib.md5(name.encode()).hexdigest()[:8], 16)
-
-
-def _val(base: float, range_size: float, seed_val: int) -> float:
-    """Return a deterministic float in [base, base+range_size] from a seed."""
-    return base + (seed_val % int(range_size * 1000)) / 1000.0
-
-
-def _int(base: int, range_size: int, seed_val: int) -> int:
-    """Return a deterministic int in [base, base+range_size] from a seed."""
-    return base + (seed_val % max(1, range_size))
 
 
 class DataWarehouseModule:
@@ -77,7 +62,7 @@ class DataWarehouseModule:
             name=name,
             dimensions=dimensions,
             measures=measures,
-            facts=_int(1000, 99000, _seed(name)),
+            facts=random.randint(1000, 100000),
             aggregations=self._generate_aggregations(dimensions, measures),
         )
         
@@ -94,12 +79,11 @@ class DataWarehouseModule:
         for dim in dimensions[:3]:  # Limit combinations
             for measure in measures[:3]:
                 key = f"{dim}_{measure}_sum"
-                s = _seed(f"{key}")
                 aggregations[key] = {
                     "type": AggregationType.SUM.value,
                     "dimension": dim,
                     "measure": measure,
-                    "value": round(_val(1000, 99000, s), 2),
+                    "value": random.uniform(1000, 100000),
                 }
         
         return aggregations
@@ -130,23 +114,21 @@ class DataWarehouseModule:
         measures = measures or ["count"]
         filters = filters or {}
         
-        # Generate deterministic sample results
+        # Generate sample results
         results = []
-        base_seed = _seed(cube_name)
-        for i in range(5 + (base_seed % 15)):
+        for i in range(random.randint(5, 20)):
             row = {"row_id": i}
             row.update(dimensions)
             
             for measure in measures:
-                s = _seed(f"{cube_name}_{measure}_{i}")
                 if aggregation == AggregationType.AVG:
-                    row[measure] = round(_val(50, 150, s), 2)
+                    row[measure] = random.uniform(50, 200)
                 elif aggregation == AggregationType.SUM:
-                    row[measure] = round(_val(1000, 49000, s), 2)
+                    row[measure] = random.uniform(1000, 50000)
                 elif aggregation == AggregationType.COUNT:
-                    row[measure] = _int(10, 990, s)
+                    row[measure] = random.randint(10, 1000)
                 else:
-                    row[measure] = round(_val(0, 100, s), 2)
+                    row[measure] = random.uniform(0, 100)
             
             results.append(row)
         
@@ -170,10 +152,9 @@ class DataWarehouseModule:
         
         return {
             "rolled_dimensions": rollup_dimensions,
-            "total_records": _int(1000, 99000, _seed(cube_name)),
+            "total_records": random.randint(1000, 100000),
             "aggregated_values": {
-                dim: round(_val(1000, 49000, _seed(f"{cube_name}_{dim}")), 2)
-                for dim in rollup_dimensions
+                dim: random.uniform(1000, 50000) for dim in rollup_dimensions
             },
         }
     
@@ -196,15 +177,13 @@ class DataWarehouseModule:
         logger.info(f"Drilling down cube {cube_name} on {drilldown_dimension}")
         
         results = []
-        base_seed = _seed(f"{cube_name}_{drilldown_dimension}")
-        for i in range(5 + (base_seed % 10)):
-            s = _seed(f"{cube_name}_{drilldown_dimension}_{i}")
+        for i in range(random.randint(5, 15)):
             results.append({
                 "dimension": drilldown_dimension,
                 "level": level,
                 "value": f"detail_{i}",
-                "count": _int(10, 490, s),
-                "total": round(_val(1000, 49000, s), 2),
+                "count": random.randint(10, 500),
+                "total": random.uniform(1000, 50000),
             })
         
         return results
@@ -227,12 +206,11 @@ class DataWarehouseModule:
         """
         logger.info(f"Slicing cube {cube_name} on {dimension}={value}")
         
-        s = _seed(f"{cube_name}_{dimension}_{str(value)}")
         return {
             "sliced_dimension": dimension,
             "slice_value": value,
-            "record_count": _int(100, 4900, s),
-            "total": round(_val(10000, 490000, s), 2),
+            "record_count": random.randint(100, 5000),
+            "total": random.uniform(10000, 500000),
         }
     
     def define_metric(
@@ -329,16 +307,14 @@ class DataWarehouseModule:
             end_time=end_time,
         )
         
-        # Generate deterministic sample data if no values
+        # Generate sample data if no values
         if not values:
             data = []
-            base_seed = _seed(metric_id)
             for i in range(period_days):
                 timestamp = start_time + timedelta(days=i)
-                s = _seed(f"{metric_id}_{i}")
                 data.append({
                     "timestamp": timestamp.isoformat(),
-                    "value": round(_val(50, 100, s), 2),
+                    "value": random.uniform(50, 150),
                 })
             return data
         
