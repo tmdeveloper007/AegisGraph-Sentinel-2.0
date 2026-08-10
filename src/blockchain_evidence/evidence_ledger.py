@@ -20,6 +20,12 @@ from .store import BlockchainEvidenceStore, get_blockchain_store
 logger = logging.getLogger(__name__)
 
 
+class MiningFailedError(Exception):
+    """Raised when proof-of-work mining cannot find a valid hash."""
+
+    pass
+
+
 class EvidenceLedger:
     """Evidence Ledger for immutable evidence recording.
     
@@ -137,7 +143,10 @@ class EvidenceLedger:
                 block.nonce = nonce
                 return hash_result
         
-        return self._compute_hash(f"{block.merkle_root}{random.randint(0, 999999)}")
+        raise MiningFailedError(
+            f"Could not find valid hash for block {block.block_number} "
+            f"after exhausting nonce range (difficulty={difficulty})"
+        )
     
     def _log_audit(self, evidence_id: str, action: str, user_id: str, details: Dict[str, Any]) -> None:
         """Log audit entry."""
