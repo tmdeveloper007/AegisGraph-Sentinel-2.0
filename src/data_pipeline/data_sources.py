@@ -144,21 +144,45 @@ class DataSourceConnector:
         return self.extract_data(source_id, limit=50)
     
     def test_connection(self, source_id: str) -> Dict[str, Any]:
-        """Test connection to data source."""
+        """Test connection to data source by attempting a real TCP connection."""
+        import socket
+        import time as time_module
+
         source = self._store.get_source(source_id)
         if not source:
             return {"success": False, "error": "Source not found"}
-        
+
         logger.info(f"Testing connection to {source.name}")
-        
-        # Simulate connection test
-        success = random.random() > 0.1  # 90% success rate
-        
-        return {
-            "success": success,
-            "latency_ms": random.uniform(10, 100) if success else 0,
-            "message": "Connected successfully" if success else "Connection failed",
-        }
+
+        host = getattr(source, "host", None)
+        port = getattr(source, "port", None)
+
+        if not host or not port:
+            return {
+                "success": False,
+                "error": f"No host/port configured for source {source_id}",
+                "latency_ms": 0,
+                "message": "Configuration missing",
+            }
+
+        start = time_module.time()
+        try:
+            sock = socket.create_connection((host, port), timeout=5)
+            latency_ms = (time_module.time() - start) * 1000
+            sock.close()
+            return {
+                "success": True,
+                "latency_ms": round(latency_ms, 2),
+                "message": "Connected successfully",
+            }
+        except Exception as exc:
+            logger.warning(f"Connection test failed for {source_id}: {exc}")
+            return {
+                "success": False,
+                "error": str(exc),
+                "latency_ms": 0,
+                "message": f"Connection failed: {exc}",
+            }
 
 
 # Global singleton
