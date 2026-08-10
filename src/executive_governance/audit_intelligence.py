@@ -369,17 +369,6 @@ class AuditIntelligenceModule:
         return due_days.get(severity, 30)
 
 
-# Global singleton
-_audit_intelligence: Optional[AuditIntelligenceModule] = None
-
-
-def get_audit_intelligence_module(store: Optional[GovernanceStore] = None) -> AuditIntelligenceModule:
-    """Get or create the singleton AuditIntelligenceModule instance."""
-    global _audit_intelligence
-    
-    if _audit_intelligence is None:
-        _audit_intelligence = AuditIntelligenceModule(store=store)
-    return _audit_intelligence
 
     def _compute_avg_audit_age(self) -> float:
         """Compute average age of open findings from store."""
@@ -439,3 +428,15 @@ def get_audit_intelligence_module(store: Optional[GovernanceStore] = None) -> Au
             1 for a in getattr(self._store, "_audits", [])
             if getattr(a, "status", "") in ("IN_PROGRESS", "IN_PROGRESS")
         )
+
+# Global singleton
+_audit_intelligence: Optional[AuditIntelligenceModule] = None
+
+
+def get_audit_intelligence_module(store: Optional[GovernanceStore] = None) -> AuditIntelligenceModule:
+    """Get or create the singleton AuditIntelligenceModule instance."""
+    global _audit_intelligence
+    
+    if _audit_intelligence is None:
+        _audit_intelligence = AuditIntelligenceModule(store=store)
+    return _audit_intelligence
