@@ -380,3 +380,62 @@ def get_audit_intelligence_module(store: Optional[GovernanceStore] = None) -> Au
     if _audit_intelligence is None:
         _audit_intelligence = AuditIntelligenceModule(store=store)
     return _audit_intelligence
+
+    def _compute_avg_audit_age(self) -> float:
+        """Compute average age of open findings from store."""
+        findings = self._store.get_open_findings()
+        if not findings:
+            return 0.0
+        now = datetime.now(timezone.utc)
+        total_days = sum(
+            (now - getattr(f, "created_at", now)).days for f in findings
+        )
+        return round(total_days / len(findings), 1)
+
+    def _compute_on_track_percentage(self) -> float:
+        """Compute percentage of findings on track from store."""
+        findings = list(self._store._findings.values())
+        if not findings:
+            return 100.0
+        on_track = sum(
+            1 for f in findings
+            if getattr(f, "status", "") in ("OPEN", "IN_PROGRESS")
+        )
+        return round(on_track / len(findings) * 100, 1)
+
+    def _compute_violation_trend(self, days: int) -> float:
+        """Compute trend change in violations over N days."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        violations = [
+            v for v in self._store.get_open_violations()
+            if getattr(v, "created_at", datetime.min) >= cutoff
+        ]
+        prev_count = max(len(violations) - len(self._store.get_open_violations()), 0)
+        if prev_count == 0:
+            return 0.0
+        return round((len(violations) - prev_count) / prev_count, 3)
+
+    def _count_policy_violations(self, policy_type: str) -> int:
+        """Count violations for a specific policy type."""
+        return sum(
+            1 for v in self._store.get_open_violations()
+            if policy_type.lower() in getattr(v, "policy_name", "").lower()
+        )
+
+    def _count_total_audits(self) -> int:
+        """Count total audits from store."""
+        return len(getattr(self._store, "_audits", []))
+
+    def _count_completed_audits(self) -> int:
+        """Count completed audits from store."""
+        return sum(
+            1 for a in getattr(self._store, "_audits", [])
+            if getattr(a, "status", "") == "COMPLETED"
+        )
+
+    def _count_in_progress_audits(self) -> int:
+        """Count in-progress audits from store."""
+        return sum(
+            1 for a in getattr(self._store, "_audits", [])
+            if getattr(a, "status", "") in ("IN_PROGRESS", "IN_PROGRESS")
+        )
