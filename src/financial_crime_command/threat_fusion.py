@@ -15,6 +15,17 @@ from .models import ThreatIndicator, ThreatLevel
 from .store import FinancialCrimeStore, get_financial_crime_store
 
 
+# Severity rank: lower number = more severe, sorted ascending
+THREAT_LEVEL_RANK = {
+    ThreatLevel.CRITICAL: 0,
+    ThreatLevel.SEVERE: 1,
+    ThreatLevel.HIGH: 2,
+    ThreatLevel.MEDIUM: 3,
+    ThreatLevel.LOW: 4,
+    ThreatLevel.INFO: 5,
+}
+
+
 @dataclass
 class ThreatCluster:
     """Cluster of related threats."""
@@ -88,7 +99,7 @@ class ThreatFusionEngine:
                 )
                 clusters.append(cluster)
         
-        return sorted(clusters, key=lambda c: c.threat_level.value)
+        return sorted(clusters, key=lambda c: THREAT_LEVEL_RANK.get(c.threat_level, 999))
 
     def _is_related(self, t1: ThreatIndicator, t2: ThreatIndicator) -> bool:
         """Check if two threats are related."""
