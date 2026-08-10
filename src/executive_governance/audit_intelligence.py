@@ -65,13 +65,13 @@ class AuditIntelligenceModule:
         affected_controls = affected_controls or []
         affected_entities = affected_entities or []
         
-        # Estimate risk impact based on severity
+        # Estimate risk impact based on severity (deterministic midpoints)
         risk_impact_map = {
-            AuditFindingSeverity.CRITICAL: random.uniform(0.8, 1.0),
-            AuditFindingSeverity.HIGH: random.uniform(0.6, 0.8),
-            AuditFindingSeverity.MEDIUM: random.uniform(0.4, 0.6),
-            AuditFindingSeverity.LOW: random.uniform(0.2, 0.4),
-            AuditFindingSeverity.INFO: random.uniform(0.1, 0.2),
+            AuditFindingSeverity.CRITICAL: 0.9,
+            AuditFindingSeverity.HIGH: 0.7,
+            AuditFindingSeverity.MEDIUM: 0.5,
+            AuditFindingSeverity.LOW: 0.3,
+            AuditFindingSeverity.INFO: 0.15,
         }
         
         finding = AuditFinding(
@@ -82,7 +82,7 @@ class AuditIntelligenceModule:
             affected_controls=affected_controls,
             affected_entities=affected_entities,
             risk_impact=risk_impact_map.get(severity, 0.5),
-            financial_impact=random.uniform(0, 100000) if severity in [AuditFindingSeverity.CRITICAL, AuditFindingSeverity.HIGH] else None,
+            financial_impact=50000.0 if severity in [AuditFindingSeverity.CRITICAL, AuditFindingSeverity.HIGH] else None,
             remediation_steps=self._generate_remediation_steps(severity, category),
             due_date=datetime.now(timezone.utc) + timedelta(days=self._get_due_days(severity)),
         )
@@ -136,8 +136,8 @@ class AuditIntelligenceModule:
             "critical_findings": len(critical_findings),
             "by_severity": by_severity,
             "by_category": by_category,
-            "avg_age_days": random.uniform(10, 30),
-            "on_track_percentage": random.uniform(70, 90),
+            "avg_age_days": self._compute_avg_audit_age(),
+            "on_track_percentage": self._compute_on_track_percentage(),
         }
     
     def track_policy_violation(
@@ -192,13 +192,13 @@ class AuditIntelligenceModule:
             "critical_violations": sum(1 for v in violations if v.severity == AuditFindingSeverity.CRITICAL),
             "high_violations": sum(1 for v in violations if v.severity == AuditFindingSeverity.HIGH),
             "trends": {
-                "7_day_change": random.uniform(-0.2, 0.3),
-                "30_day_change": random.uniform(-0.3, 0.4),
+                "7_day_change": self._compute_violation_trend(days=7),
+                "30_day_change": self._compute_violation_trend(days=30),
             },
             "top_violated_policies": [
-                {"policy": "Access Control Policy", "count": random.randint(5, 15)},
-                {"policy": "Data Protection Policy", "count": random.randint(3, 10)},
-                {"policy": "Authentication Policy", "count": random.randint(2, 8)},
+                {"policy": "Access Control Policy", "count": self._count_policy_violations("access_control")},
+                {"policy": "Data Protection Policy", "count": self._count_policy_violations("data_protection")},
+                {"policy": "Authentication Policy", "count": self._count_policy_violations("authentication")},
             ],
         }
     
@@ -229,9 +229,9 @@ class AuditIntelligenceModule:
                 "generated_at": datetime.now(timezone.utc).isoformat(),
             },
             "executive_summary": {
-                "total_audits": random.randint(5, 20),
-                "audits_completed": random.randint(3, 15),
-                "audits_in_progress": random.randint(1, 5),
+                "total_audits": self._count_total_audits(),
+                "audits_completed": self._count_completed_audits(),
+                "audits_in_progress": self._count_in_progress_audits(),
                 "total_findings": finding_summary["total_findings"],
                 "open_findings": finding_summary["open_findings"],
                 "critical_findings": finding_summary["critical_findings"],
