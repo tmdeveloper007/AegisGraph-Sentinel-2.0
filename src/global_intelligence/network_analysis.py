@@ -508,8 +508,24 @@ class NetworkAnalysisEngine:
         return communities
 
     def _classify_community(self, member_ids: List[str]) -> str:
-        """Classify the type of community."""
-        return "fraud_ring"
+        """Classify the type of community based on member entity types.
+
+        Returns the most common EntityType among members, or 'unknown'
+        if no members have a registered entity.
+        """
+        from collections import Counter
+
+        entity_types = []
+        for member_id in member_ids:
+            entity = self._store.get_entity(member_id)
+            if entity:
+                entity_types.append(entity.entity_type.value)
+
+        if not entity_types:
+            return "unknown"
+
+        type_counts = Counter(entity_types)
+        return type_counts.most_common(1)[0][0]
 
     def _calculate_community_metrics(
         self,
