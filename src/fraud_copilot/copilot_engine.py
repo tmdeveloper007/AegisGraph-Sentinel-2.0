@@ -233,40 +233,76 @@ class CopilotEngine:
         session_id: str,
         case_id: str,
     ) -> List[Dict[str, Any]]:
-        """Generate recommendations for a case."""
-        recommendations = [
-            Recommendation(
+        """Generate recommendations for a case based on stored case data."""
+        case = self.store.get_case(case_id)
+
+        recommendations = []
+
+        if case is not None:
+            risk_score = getattr(case, "risk_score", 0)
+            if risk_score and risk_score >= 0.8:
+                recommendations.append(Recommendation(
+                    recommendation_id=str(uuid.uuid4()),
+                    case_id=case_id,
+                    recommendation_type=RecommendationType.ESCALATION,
+                    title="Escalate to Senior Analyst",
+                    description=f"Risk score {risk_score:.2f} exceeds escalation threshold",
+                    priority=1,
+                    confidence=min(0.95, risk_score + 0.1),
+                ))
+            recommendations.append(Recommendation(
                 recommendation_id=str(uuid.uuid4()),
                 case_id=case_id,
                 recommendation_type=RecommendationType.INVESTIGATION,
                 title="Conduct Deep Transaction Analysis",
                 description="Review all recent transactions for the involved accounts",
-                priority=1,
+                priority=len(recommendations) + 1,
                 confidence=0.85,
-            ),
-            Recommendation(
-                recommendation_id=str(uuid.uuid4()),
-                case_id=case_id,
-                recommendation_type=RecommendationType.ESCALATION,
-                title="Escalate to Senior Analyst",
-                description="Given the complexity, escalate to senior fraud analyst",
-                priority=2,
-                confidence=0.78,
-            ),
-            Recommendation(
-                recommendation_id=str(uuid.uuid4()),
-                case_id=case_id,
-                recommendation_type=RecommendationType.ENHANCED_MONITORING,
-                title="Enable Enhanced Monitoring",
-                description="Set up real-time alerts for suspicious activity",
-                priority=3,
-                confidence=0.82,
-            ),
-        ]
-        
+            ))
+            if not recommendations or (risk_score and risk_score >= 0.5):
+                recommendations.append(Recommendation(
+                    recommendation_id=str(uuid.uuid4()),
+                    case_id=case_id,
+                    recommendation_type=RecommendationType.ENHANCED_MONITORING,
+                    title="Enable Enhanced Monitoring",
+                    description="Set up real-time alerts for suspicious activity",
+                    priority=len(recommendations) + 1,
+                    confidence=0.82,
+                ))
+        else:
+            recommendations = [
+                Recommendation(
+                    recommendation_id=str(uuid.uuid4()),
+                    case_id=case_id,
+                    recommendation_type=RecommendationType.INVESTIGATION,
+                    title="Conduct Deep Transaction Analysis",
+                    description="Review all recent transactions for the involved accounts",
+                    priority=1,
+                    confidence=0.85,
+                ),
+                Recommendation(
+                    recommendation_id=str(uuid.uuid4()),
+                    case_id=case_id,
+                    recommendation_type=RecommendationType.ESCALATION,
+                    title="Escalate to Senior Analyst",
+                    description="Given the complexity, escalate to senior fraud analyst",
+                    priority=2,
+                    confidence=0.78,
+                ),
+                Recommendation(
+                    recommendation_id=str(uuid.uuid4()),
+                    case_id=case_id,
+                    recommendation_type=RecommendationType.ENHANCED_MONITORING,
+                    title="Enable Enhanced Monitoring",
+                    description="Set up real-time alerts for suspicious activity",
+                    priority=3,
+                    confidence=0.82,
+                ),
+            ]
+
         for rec in recommendations:
             self.store.store_recommendation(case_id, rec)
-        
+
         return [
             {
                 "id": r.recommendation_id,
