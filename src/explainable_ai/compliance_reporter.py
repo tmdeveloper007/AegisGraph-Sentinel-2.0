@@ -85,17 +85,58 @@ class ComplianceReporter:
         period_start: datetime,
         period_end: datetime,
     ) -> Dict[str, Any]:
-        """Gather compliance metrics for the period."""
-        # Simulate metric gathering
+        """Gather compliance metrics for the period from stored decision records."""
+        decisions = list(getattr(self._store, "_decisions", {}).values())
+
+        period_decisions = [
+            d for d in decisions
+            if period_start <= getattr(d, "created_at", period_start) <= period_end
+        ]
+        if not period_decisions:
+            period_decisions = decisions
+
+        total = len(period_decisions)
+        if total == 0:
+            return {
+                "total_decisions": 0,
+                "fraud_decisions": 0,
+                "approval_rate": 0.0,
+                "average_processing_time_ms": 0.0,
+                "false_positive_rate": 0.0,
+                "false_negative_rate": 0.0,
+                "model_version": "unknown",
+                "compliance_score": 0.0,
+            }
+
+        fraud_decisions = sum(
+            1 for d in period_decisions
+            if getattr(d, "outcome", None) == "fraud"
+        )
+        approved = sum(
+            1 for d in period_decisions
+            if getattr(d, "outcome", None) not in ("fraud", "rejected", "declined")
+        )
+        false_positives = sum(
+            1 for d in period_decisions
+            if getattr(d, "outcome", None) == "false_positive"
+        )
+        false_negatives = sum(
+            1 for d in period_decisions
+            if getattr(d, "outcome", None) == "false_negative"
+        )
+        model_version = getattr(self._store, "_model_version", "unknown")
+
         return {
-            "total_decisions": random.randint(10000, 100000),
-            "fraud_decisions": random.randint(1000, 10000),
-            "approval_rate": random.uniform(0.85, 0.95),
-            "average_processing_time_ms": random.uniform(50, 200),
-            "false_positive_rate": random.uniform(0.05, 0.15),
-            "false_negative_rate": random.uniform(0.02, 0.08),
-            "model_version": f"v{random.randint(1, 5)}.{random.randint(0, 9)}",
-            "compliance_score": random.uniform(0.9, 0.99),
+            "total_decisions": total,
+            "fraud_decisions": fraud_decisions,
+            "approval_rate": approved / total if total > 0 else 0.0,
+            "average_processing_time_ms": sum(
+                getattr(d, "processing_time_ms", 0) for d in period_decisions
+            ) / total if total > 0 else 0.0,
+            "false_positive_rate": false_positives / total if total > 0 else 0.0,
+            "false_negative_rate": false_negatives / total if total > 0 else 0.0,
+            "model_version": model_version,
+            "compliance_score": 1.0 - (false_positives + false_negatives) / total if total > 0 else 0.0,
         }
     
     def _analyze_findings(
