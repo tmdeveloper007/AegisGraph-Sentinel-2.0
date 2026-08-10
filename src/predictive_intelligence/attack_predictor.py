@@ -6,7 +6,6 @@ Predicts future attack paths and fraud network expansion.
 
 import time
 import random
-import threading
 from threading import Lock
 from typing import Dict, List, Optional, Any, Set
 import logging
