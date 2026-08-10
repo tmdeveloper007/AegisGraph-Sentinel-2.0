@@ -4,10 +4,7 @@ SHAP Explainer Module.
 SHAP (SHapley Additive exPlanations) implementation for model explanations.
 """
 
-import math
-import math
 from typing import Callable, Dict, List, Optional, Any
-from datetime import datetime, timezone
 import logging
 
 from .counterfactual_generator import CounterfactualGenerator
@@ -121,23 +118,23 @@ class SHAPExplainer:
         
         remaining_diff = total_diff
         for i, (feature, value) in enumerate(sorted_features):
-            # Approximate marginal contribution
-            weight = 1.0 / (i + 1)  # Earlier features get higher weight
-            
             # Deterministic marginal contribution: sqrt decay approximates TreeSHAP
-        contribution = remaining_diff * weight
-            
-            # Ensure we don't overshoot
+            weight = 1.0 / (i + 1)
+
+            # Last feature absorbs remaining difference to ensure exact sum
             if i == len(sorted_features) - 1:
                 contribution = remaining_diff
-            
+            else:
+                contribution = remaining_diff * weight
+
             remaining_diff -= contribution
-            
+
             importance = FeatureImportance(
                 feature=feature,
                 importance=contribution,
                 direction="positive" if contribution > 0 else "negative",
-                confidence=random.uniform(0.85, 0.99),
+                # Deterministic confidence: higher weight = higher confidence
+                confidence=min(0.99, 0.75 + weight * 0.2),
             )
             feature_importances.append(importance)
         
@@ -239,9 +236,10 @@ class SHAPExplainer:
         explanations = self._store.get_model_explanations(model_id, limit=num_samples)
         
         if not explanations:
-            # Return default importance
+            # Return default importance with deterministic uniform value
+            default_importance = 0.2
             return [
-                FeatureImportance(feature=f"feature_{i}", importance=random.uniform(0.1, 0.3))
+                FeatureImportance(feature=f"feature_{i}", importance=default_importance)
                 for i in range(5)
             ]
         
