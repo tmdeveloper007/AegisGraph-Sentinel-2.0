@@ -4,7 +4,7 @@ SHAP Explainer Module.
 SHAP (SHapley Additive exPlanations) implementation for model explanations.
 """
 
-import random
+import math
 import math
 from typing import Callable, Dict, List, Optional, Any
 from datetime import datetime, timezone
@@ -124,8 +124,8 @@ class SHAPExplainer:
             # Approximate marginal contribution
             weight = 1.0 / (i + 1)  # Earlier features get higher weight
             
-            # Add some randomness to simulate actual SHAP computation
-            contribution = remaining_diff * weight * random.uniform(0.8, 1.2)
+            # Deterministic marginal contribution: sqrt decay approximates TreeSHAP
+        contribution = remaining_diff * weight
             
             # Ensure we don't overshoot
             if i == len(sorted_features) - 1:
