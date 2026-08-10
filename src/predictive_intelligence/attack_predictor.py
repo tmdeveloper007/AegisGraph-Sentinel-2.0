@@ -59,25 +59,42 @@ class AttackPathPredictor:
         
         predicted_path = list(known_path)
         
-        # Extend path based on depth
+        # Extend path deterministically from source entity ID and known attack data
         for i in range(depth):
-            next_hop = f"hop_{len(predicted_path)}_{random.randint(1000, 9999)}"
+            # Use source ID hash to derive hop IDs deterministically
+            hop_seed = hash(f"{source_entity_id}:{len(predicted_path)}")
+            next_hop = f"hop_{len(predicted_path)}_{abs(hop_seed) % 100000:05d}"
             predicted_path.append(next_hop)
-        
-        # Calculate probability based on path length and structure
-        base_probability = 0.8
+
+        # Calculate probability based on path length and known attack data
+        high_prob_attacks = self._store.get_high_probability_attacks(threshold=0.5)
+        if high_prob_attacks:
+            base_probability = max(
+                (p.probability for p in high_prob_attacks[:1]), default=0.5
+            )
+        else:
+            base_probability = 0.5
         path_factor = len(predicted_path) / 10.0
         probability = max(base_probability - path_factor, 0.1)
-        
-        # Estimate damage based on path length
-        estimated_damage = len(predicted_path) * random.uniform(5000, 25000)
-        
+
+        # Estimate damage based on path length and historical damage data
+        if high_prob_attacks:
+            avg_damage = sum(
+                p.estimated_damage for p in high_prob_attacks if p.estimated_damage
+            ) / len(high_prob_attacks)
+            estimated_damage = avg_damage * len(predicted_path)
+        else:
+            estimated_damage = len(predicted_path) * 10000.0
+
+        # Confidence based on number of known high-probability attacks
+        confidence = min(0.9, 0.5 + len(high_prob_attacks) * 0.05)
+
         prediction = AttackPathPrediction(
             source_entity_id=source_entity_id,
             predicted_path=predicted_path,
             probability=probability,
             estimated_damage=estimated_damage,
-            confidence=random.uniform(0.55, 0.80),
+            confidence=confidence,
         )
         
         # Store prediction
