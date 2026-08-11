@@ -55,15 +55,18 @@ def fuzzy_dedupe(records, keys, threshold=0.8):
         matched = None
         for group in groups:
             for member in group["records"]:
-                if jaccard_similarity(text, _text(member)) >= threshold:
+                if jaccard_similarity(text, group["_cache"][id(member)]) >= threshold:
                     matched = group
                     break
             if matched is not None:
                 break
         if matched is None:
-            groups.append({"group": len(groups), "records": [record]})
+            groups.append({"group": len(groups), "records": [record], "_cache": {id(record): text}})
         else:
             matched["records"].append(record)
+            matched["_cache"][id(record)] = text
+    for g in groups:
+        del g["_cache"]
     return groups
 
 
