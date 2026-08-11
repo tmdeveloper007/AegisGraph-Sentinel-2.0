@@ -137,34 +137,42 @@ class ABTestingEngine:
     
     def _calculate_winner(self, test: ABTest) -> str:
         """Calculate statistical winner of A/B test."""
+        # Z-score lookup keyed by confidence level
+        z_threshold_map = {
+            0.99: 2.576,
+            0.95: 1.96,
+            0.90: 1.645,
+            0.85: 1.44,
+            0.80: 1.28,
+        }
+        z_threshold = z_threshold_map.get(test.confidence_level, 1.96)
+
         # Simple comparison based on primary metric
         primary_metric = "accuracy"  # Default metric
-        
+
         metric_a = test.metrics.get(primary_metric, 0)
         metric_b = test.variant_metrics.get(primary_metric, 0)
-        
+
         # Calculate statistical significance (simplified)
         n_a = test.sample_size * test.traffic_split
         n_b = test.sample_size * (1 - test.traffic_split)
-        
+
         # Standard error (simplified)
         se_a = math.sqrt(metric_a * (1 - metric_a) / n_a) if n_a > 0 else 0
         se_b = math.sqrt(metric_b * (1 - metric_b) / n_b) if n_b > 0 else 0
-        
+
         # Z-score for difference
         diff = abs(metric_b - metric_a)
         se_combined_sq = se_a**2 + se_b**2
         se_diff = math.sqrt(se_combined_sq) if se_combined_sq > 0 else 0
-        
+
         if se_diff == 0:
             return "TIE"
-        
+
         z_score = diff / se_diff
-        
-        # Determine winner based on confidence level
-        if z_score > 1.96:  # 95% confidence
-            return "B" if metric_b > metric_a else "A"
-        elif z_score > 1.645:  # 90% confidence
+
+        # Determine winner based on configured confidence level
+        if z_score > z_threshold:
             return "B" if metric_b > metric_a else "A"
         else:
             return "INCONCLUSIVE"
