@@ -56,6 +56,25 @@ def snowflake_id(worker_id: int = 0, *, epoch_ms: int = 1288834974657) -> int:
         )
 
 
+def snowflake_from_datetime(dt_value, worker_id: int = 0, *, epoch_ms: int = 1288834974657) -> int:
+    """Generate a snowflake ID for a specific datetime instead of the current time.
+
+    Useful for reconstructing IDs from historical timestamps or for deterministic
+    ID generation in tests.
+    """
+    global _snowflake_last_ms, _snowflake_sequence
+    worker_id &= _SNOWFLAKE_WORKER_MASK
+    ts_ms = int(dt_value.timestamp() * 1000)
+    ts_ms = max(ts_ms, _snowflake_last_ms + 1)
+    _snowflake_sequence = (_snowflake_sequence + 1) & _SNOWFLAKE_SEQUENCE_MASK
+    _snowflake_last_ms = ts_ms
+    return (
+        ((ts_ms - epoch_ms) << 22)
+        | (worker_id << 12)
+        | _snowflake_sequence
+    )
+
+
 def readable_id(prefix: str | None = None, *, length: int = 8) -> str:
     if length < 1:
         raise ValueError("length must be >= 1")
