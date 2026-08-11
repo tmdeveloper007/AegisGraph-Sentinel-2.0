@@ -110,6 +110,6 @@ def retry(policy: Optional[RetryPolicy] = None, **kwargs: Any) -> Callable:
     return decorator
 
 
-def retry_sync(func: Callable, policy: Optional[RetryPolicy] = None, *args: Any, **kwargs: Any) -> Any:
+def retry_sync(func: Callable, *args: Any, policy: Optional[RetryPolicy] = None, **kwargs: Any) -> Any:
     """Directly invoke ``func(*args, **kwargs)`` with a retry policy."""
     return retry(policy)(func)(*args, **kwargs)
