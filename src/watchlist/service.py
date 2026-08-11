@@ -63,6 +63,7 @@ class WatchlistService:
         # Simple matching logic
         entity_lower = entity_name.lower()
         for entry in self.watchlists.values():
+            # Match against canonical name
             name_lower = entry.name.lower()
             if entity_lower == name_lower:
                 matched_entry_id = entry.entry_id
@@ -71,7 +72,27 @@ class WatchlistService:
                 matched_entry_id = entry.entry_id
                 confidence = 0.9
             else:
-                continue
+                # Match against aliases
+                for alias in (entry.aliases or []):
+                    alias_lower = alias.lower()
+                    if entity_lower == alias_lower:
+                        matched_entry_id = entry.entry_id
+                        confidence = 0.95
+                        break
+                    elif entity_lower in alias_lower or alias_lower in entity_lower:
+                        matched_entry_id = entry.entry_id
+                        confidence = 0.85
+                        break
+                else:
+                    # Match against identifiers
+                    for identifier_value in (entry.identifiers or {}).values():
+                        id_lower = str(identifier_value).lower()
+                        if entity_lower == id_lower or entity_lower in id_lower or id_lower in entity_lower:
+                            matched_entry_id = entry.entry_id
+                            confidence = 0.8
+                            break
+                    else:
+                        continue
             match_result = MatchResult.POTENTIAL_MATCH if confidence < 0.95 else MatchResult.CONFIRMED_MATCH
             break
         
