@@ -195,11 +195,14 @@ class VelocityCalculator:
                 'avg_hop_time': 0.0,
             }
 
-        # Prune stale edges from graph based on time_window
-        if transactions:
+        # Prune stale edges from graph based on time_window.
+        # Work on a shallow copy so the caller's graph is not mutated.
+        working_graph = graph.copy() if graph else None
+        if working_graph and transactions:
             latest_ts = max(t.timestamp for t in transactions)
             cutoff = latest_ts - self.time_window
-            self.prune_stale_edges(graph, cutoff)
+            self.prune_stale_edges(working_graph, cutoff)
+            working_graph = working_graph  # already a copy
 
         # Filter to valid temporal chain: monotonically increasing timestamps
         # with max_hop_delay between consecutive hops.
@@ -234,7 +237,7 @@ class VelocityCalculator:
             
             if source not in shortest_path_cache:
                 try:
-                    shortest_path_cache[source] = nx.single_source_shortest_path_length(graph, source)
+                    shortest_path_cache[source] = nx.single_source_shortest_path_length(working_graph, source)
                 except nx.NodeNotFound:
                     shortest_path_cache[source] = {}
 
@@ -255,7 +258,9 @@ class VelocityCalculator:
         
         # Velocity = distance / time
         velocity = total_distance / total_time
-        avg_hop_time = total_time / len(valid_transactions)
+        # N transactions span N-1 hops, so avg hop time divides by N-1
+        hop_count = len(valid_transactions) - 1
+        avg_hop_time = total_time / hop_count if hop_count > 0 else 0.0
         
         return {
             'chain_velocity': velocity,
@@ -280,6 +285,10 @@ class VelocityCalculator:
             Dictionary with burst metrics
         """
         normalized = self._normalize_transactions(transactions)
+
+        # Normalize datetime inputs to epoch float before processing.
+        if isinstance(current_time, datetime):
+            current_time = current_time.timestamp()
 
         # Backward-compatible overload: detect_burst(recent, historical) -> float.
         if not isinstance(current_time, (int, float)):
