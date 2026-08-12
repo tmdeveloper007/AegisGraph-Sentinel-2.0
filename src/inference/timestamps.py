@@ -69,12 +69,12 @@ def to_utc(value) -> Optional[datetime]:
         # A bare numeric string is an epoch value, not an ISO date.
         try:
             return _from_epoch(float(text))
-        except ValueError:
+        except (OverflowError, OSError, ValueError):
             pass
 
         try:
             parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
-        except ValueError:
+        except (OverflowError, OSError, ValueError):
             return None
         return parsed.astimezone(timezone.utc) if parsed.tzinfo else parsed.replace(
             tzinfo=timezone.utc
