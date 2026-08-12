@@ -105,6 +105,7 @@ class EdgeCaseHandler:
 
         cycles: List[List[str]] = []
         visited: Set[str] = set()
+        _seen_cycles: Set[frozenset] = set()
 
         def dfs(node: str, path: List[str], stack: Set[str]) -> None:
             if len(path) > max_cycle_length:
@@ -112,7 +113,8 @@ class EdgeCaseHandler:
             for neighbor in adjacency.get(node, []):
                 if neighbor in path:
                     cycle = path[path.index(neighbor):] + [neighbor]
-                    if len(cycle) > 1 and cycle not in cycles:
+                    if len(cycle) > 1 and frozenset(cycle) not in _seen_cycles:
+                        _seen_cycles.add(frozenset(cycle))
                         cycles.append(cycle)
                 elif neighbor not in stack:
                     dfs(neighbor, path + [neighbor], stack | {neighbor})
