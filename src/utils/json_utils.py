@@ -81,6 +81,6 @@ def to_snake_case(camel: str) -> str:
     """Convert a camelCase or PascalCase string to snake_case."""
     if not camel:
         return camel
-    snake = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", camel)
+    snake = re.sub(r"([A-Z])([A-Z][a-z])", r"\1_\2", camel)
     snake = re.sub(r"([a-z\d])([A-Z])", r"\1_\2", snake)
     return snake.lower()
