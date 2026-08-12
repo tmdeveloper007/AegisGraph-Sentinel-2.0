@@ -168,11 +168,12 @@ class AdaptiveAuthStore:
     
     def get_active_session_ids(self) -> List[str]:
         """Return a snapshot of active, non-expired session IDs."""
-        return [
-            sid
-            for sid, session in list(self._sessions.items())
-            if session.status == SessionStatus.ACTIVE and not session.is_expired()
-        ]
+        with self._lock:
+            return [
+                sid
+                for sid, session in list(self._sessions.items())
+                if session.status == SessionStatus.ACTIVE and not session.is_expired()
+            ]
 
     # Behavior Profile Management
     def get_or_create_profile(self, user_id: str) -> BehaviorProfile:
