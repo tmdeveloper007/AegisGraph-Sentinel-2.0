@@ -95,6 +95,8 @@ class AdaptiveAuthStore:
         return session
 
     def get_session(self, session_id: str) -> Optional[AuthenticationSession]:
+        if session_id is None:
+            return None
         """Get session by ID with O(1) thread-safe lookup."""
         with self._lock:
             session = self._sessions.get(session_id)
