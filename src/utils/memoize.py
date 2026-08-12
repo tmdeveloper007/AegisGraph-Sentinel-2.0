@@ -81,7 +81,7 @@ def memoize(ttl=None, *, key_func=None, maxsize=128):
         raise ValueError("maxsize must be positive")
 
     def decorator(fn):
-        cache = TTLCache(ttl=ttl, maxsize=maxsize, clock=lambda: _clock())
+        cache = TTLCache(ttl=ttl, maxsize=maxsize, clock=clock)
         stats = {"hits": 0, "misses": 0}
 
         @wraps(fn)
