@@ -13,7 +13,7 @@ class ScoreCalculator:
         if max_value == min_value:
             return 0.0
 
-        raw_value = EdgeCaseHandler.safe_float(value, default=min_value, min_value=min_value, max_value=max_value)
+        raw_value = EdgeCaseHandler.safe_float(value, default=max_value, min_value=min_value, max_value=max_value)
         normalized = (raw_value - min_value) / (max_value - min_value)
         return EdgeCaseHandler.safe_score(normalized)
 
