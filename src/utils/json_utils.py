@@ -74,7 +74,7 @@ def to_camel_case(snake: str) -> str:
     if not snake:
         return snake
     parts = snake.split("_")
-    return parts[0] + "".join(part[:1].upper() + part[1:] for part in parts[1:])
+    return parts[0].lower() + "".join(part[:1].upper() + part[1:] for part in parts[1:])
 
 
 def to_snake_case(camel: str) -> str:
