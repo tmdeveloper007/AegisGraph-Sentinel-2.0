@@ -47,7 +47,14 @@ class ThreatDetector:
 
     def detect(self, event_type: str) -> Optional[Threat]:
         count = self.tracker.record_event(event_type)
-        severity = self.thresholds.get(count)
+        # Find the highest severity for which the threshold has been crossed.
+        # Sort thresholds descending so we pick the most severe crossing.
+        severity = None
+        if self.thresholds:
+            for threshold_count in sorted(self.thresholds.keys(), reverse=True):
+                if count >= threshold_count:
+                    severity = self.thresholds[threshold_count]
+                    break
         if severity is None:
             return None
 
