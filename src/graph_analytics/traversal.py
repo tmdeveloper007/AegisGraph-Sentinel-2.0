@@ -75,8 +75,8 @@ def neighbors_in_degree(graph):
     degrees = {node: 0 for node in graph}
     for neighbors in graph.values():
         for neighbor in neighbors:
-            degrees.setdefault(neighbor, 0)
-            degrees[neighbor] += 1
+            if neighbor in degrees:
+                degrees[neighbor] += 1
     return degrees
 
 
