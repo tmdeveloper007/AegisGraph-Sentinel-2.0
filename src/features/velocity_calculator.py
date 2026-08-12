@@ -281,6 +281,10 @@ class VelocityCalculator:
         """
         normalized = self._normalize_transactions(transactions)
 
+        # Normalize datetime inputs to epoch float before processing.
+        if isinstance(current_time, datetime):
+            current_time = current_time.timestamp()
+
         # Backward-compatible overload: detect_burst(recent, historical) -> float.
         if not isinstance(current_time, (int, float)):
             recent = normalized
