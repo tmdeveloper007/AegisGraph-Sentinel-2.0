@@ -162,11 +162,13 @@ class FederationEngine:
         if partner.status != FederationStatus.ACTIVE:
             return False
 
-        # Check trust decay
-        if partner.joined_at < datetime.now(timezone.utc) - timedelta(
-            days=self._config.trust_decay_days
-        ):
+        # Check trust decay only once per decay interval.
+        # Decay is based on time since last validation, not time since joining.
+        now = datetime.now(timezone.utc)
+        last_validated = partner.last_validated_at or partner.joined_at
+        if now - last_validated >= timedelta(days=self._config.trust_decay_days):
             partner.trust_level = max(0, partner.trust_level - 10)
+            partner.last_validated_at = now
             self._store.store_partner(partner)
 
         if partner.trust_level < 10:
