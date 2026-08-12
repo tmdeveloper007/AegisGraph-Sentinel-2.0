@@ -275,6 +275,7 @@ class FederationPartner:
     received_intelligence: int = 0
     sharing_policy: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    last_validated_at: Optional[datetime] = None
 
 
 @dataclass
