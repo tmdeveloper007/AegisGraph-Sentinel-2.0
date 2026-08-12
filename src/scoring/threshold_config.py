@@ -25,10 +25,10 @@ class ThresholdConfig:
         block = EdgeCaseHandler.safe_score(self.thresholds.get("block", 0.9))
 
         if not (0.0 <= allow < review < block <= 1.0):
-            self.thresholds = dict(DEFAULT_RISK_THRESHOLDS)
-            allow = DEFAULT_RISK_THRESHOLDS["allow"]
-            review = DEFAULT_RISK_THRESHOLDS["review"]
-            block = DEFAULT_RISK_THRESHOLDS["block"]
+            raise ValueError(
+                f"Invalid thresholds: allow={allow}, review={review}, block={block}. "
+                f"Must satisfy 0.0 <= allow < review < block <= 1.0"
+            )
 
         self.thresholds["allow"] = allow
         self.thresholds["review"] = review
