@@ -274,7 +274,7 @@ def eigenvector_centrality(
     if total == 0:
         return scores
     if total == 1:
-        return {node_list[0]: 0.0}
+        return {node_list[0]: 1.0}
 
     view = _undirected_view(adjacency, node_list)
     vector = {node: 1.0 / total for node in node_list}
