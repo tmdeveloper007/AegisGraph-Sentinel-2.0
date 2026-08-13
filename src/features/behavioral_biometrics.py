@@ -90,6 +90,20 @@ class KeystrokeDynamicsAnalyzer:
         
         # Extract timing features
         hold_times = [e.release_time - e.press_time for e in events]
+
+        # Clip outliers before computing statistics.
+        # Extreme hold times caused by tab switches or process interruptions
+        # can be orders of magnitude larger than normal keystroke durations
+        # and would otherwise distort the mean and derived scores.
+        if len(hold_times) >= 4:
+            hold_times_sorted = np.sort(hold_times)
+            q1 = hold_times_sorted[len(hold_times_sorted) // 4]
+            q3 = hold_times_sorted[3 * len(hold_times_sorted) // 4]
+            iqr = q3 - q1
+            if iqr > 0:
+                lower = q1 - 1.5 * iqr
+                upper = q3 + 1.5 * iqr
+                hold_times = [t for t in hold_times if lower <= t <= upper]
         press_times = [e.press_time for e in events]
         flight_times = [
             events[i+1].press_time - events[i].release_time
