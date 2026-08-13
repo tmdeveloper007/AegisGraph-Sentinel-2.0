@@ -63,9 +63,10 @@ class ConfigReloadManager:
                 errors.append(f"{name} is not registered")
                 continue
 
+            from dataclasses import replace as _replace
             current = self.registry.get_entry(name)
-            current.value = value
             proposed.append(current)
+            proposed[-1] = _replace(current, value=value)
 
         result = ConfigValidator.validate_many(proposed)
         errors.extend(result.errors)
