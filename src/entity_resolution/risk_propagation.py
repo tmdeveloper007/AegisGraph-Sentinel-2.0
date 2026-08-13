@@ -142,7 +142,7 @@ class RiskPropagator:
         while queue:
             current_id, current_risk, depth = queue.popleft()
 
-            if depth > self._config.max_propagation_depth:
+            if depth >= self._config.max_propagation_depth:
                 continue
 
             if current_risk < self._config.risk_threshold:
