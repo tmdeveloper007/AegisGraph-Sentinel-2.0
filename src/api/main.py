@@ -190,6 +190,7 @@ from src.phase_64_autonomous_threat_simulation_platform.api import router as pha
 from src.phase_66_autonomous_compliance_validation_platform.api import router as phase66_router
 from src.phase_67_global_threat_forecasting_engine.api import router as phase67_router
 from .warfare_routes import router as warfare_router
+from .omega_routes import router as omega_router
 
 from .schemas import (
     AccountOpeningRequest,
@@ -1876,6 +1877,8 @@ app.include_router(phase66_router)
 app.include_router(phase67_router)
 # Register Cyber-Fraud Warfare routes (Issue #1507)
 app.include_router(warfare_router)
+# Register Omega Platform routes - gated per-endpoint via verify_api_key
+app.include_router(omega_router)
 
 
 
@@ -6864,9 +6867,9 @@ async def verify_zk_proof_endpoint(
     proof_payload: dict = Body(..., description="ZKP proof payload object"),
 ):
     """Verify zero-knowledge proof attestation without revealing underlying risk score metadata."""
-    from src.quantum_security.zkp_verifier import ZKPVerifier
+    from src.quantum_security.zkp_verifier import get_zkp_verifier
 
-    verifier = ZKPVerifier()
+    verifier = get_zkp_verifier()
     is_valid = verifier.verify_proof(proof_payload)
 
     return {

@@ -49,7 +49,6 @@ from .dashboard import PlatformDashboard, get_platform_dashboard
 __all__ = [
     # Original exports
     "AuditLogger",
-    "AuditLogger",
     "MetricsLogger",
     "StructuredLogger",
     "clear_request_context",
