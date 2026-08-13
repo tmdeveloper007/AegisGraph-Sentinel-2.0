@@ -119,6 +119,12 @@ def camel_to_snake(value):
     return value.lower()
 
 
+
+def is_valid_url(value, allowed_schemes=None) -> bool:
+    """Alias for :func:`validate_url` for call-site consistency."""
+    return validate_url(value, allowed_schemes=allowed_schemes)
+
+
 def sanitize_log_message(value):
     """Strip ANSI escape sequences and control characters for safe logging."""
     if value is None:
