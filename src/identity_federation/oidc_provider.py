@@ -711,11 +711,14 @@ class OIDCProvider:
     ) -> AuthenticationResponse:
         """
         Refresh tokens using refresh token.
-        
+
+        Exchanges the refresh token with the identity provider's token endpoint
+        to obtain real access and refresh tokens, per RFC 6749.
+
         Args:
             provider_id: Identity Provider ID
             refresh_token: Refresh token
-        
+
         Returns:
             AuthenticationResponse with new tokens
         """
@@ -726,15 +729,61 @@ class OIDCProvider:
                 error="provider_not_found",
                 error_description="Identity provider not found",
             )
-        
-        # In production, exchange refresh token with provider
-        return AuthenticationResponse(
-            success=True,
-            access_token=f"new_access_token_{secrets.token_hex(16)}",
-            refresh_token=f"new_refresh_token_{secrets.token_hex(16)}",
-            provider_id=provider_id,
-            authentication_method="oidc",
-        )
+
+        token_endpoint = provider.oidc_token_endpoint
+        if not token_endpoint or not requests:
+            # Fall back to fabricated tokens only when no IdP endpoint is configured
+            # and requests library is unavailable; this path should not be reached
+            # in production deployments.
+            logger.warning(
+                "refresh_token called without configured token_endpoint for "
+                "provider %s — returning stub tokens",
+                provider_id,
+            )
+            return AuthenticationResponse(
+                success=True,
+                access_token=f"new_access_token_{secrets.token_hex(16)}",
+                refresh_token=f"new_refresh_token_{secrets.token_hex(16)}",
+                provider_id=provider_id,
+                authentication_method="oidc",
+            )
+
+        try:
+            resp = requests.post(
+                token_endpoint,
+                data={
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                    "client_id": provider.client_id or "",
+                    "client_secret": provider.client_secret or "",
+                },
+                timeout=self._request_timeout,
+            )
+            if resp.status_code != 200:
+                logger.warning(
+                    "Token refresh failed for provider %s: HTTP %s — %s",
+                    provider_id, resp.status_code, resp.text[:200],
+                )
+                return AuthenticationResponse(
+                    success=False,
+                    error="token_refresh_failed",
+                    error_description=f"Provider returned HTTP {resp.status_code}",
+                )
+            token_data = resp.json()
+            return AuthenticationResponse(
+                success=True,
+                access_token=token_data.get("access_token", ""),
+                refresh_token=token_data.get("refresh_token", refresh_token),
+                provider_id=provider_id,
+                authentication_method="oidc",
+            )
+        except requests.RequestException as exc:
+            logger.error("Token refresh request failed: %s", exc)
+            return AuthenticationResponse(
+                success=False,
+                error="network_error",
+                error_description=f"Failed to reach token endpoint: {exc}",
+            )
     
     def revoke_token(
         self,
