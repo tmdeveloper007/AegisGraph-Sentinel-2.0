@@ -148,7 +148,7 @@ class DefaultRateLimitMiddleware(BaseHTTPMiddleware):
                     decision = check_rate_limit(
                         identity,
                         scope=scope,
-                        limit=runtime_settings.api.rate_limit_burst,
+                        limit=runtime_settings.api.rate_limit,
                         burst=runtime_settings.api.rate_limit_burst,
                         window_seconds=runtime_settings.api.rate_limit_window_seconds,
                     )
