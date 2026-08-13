@@ -195,11 +195,13 @@ class VelocityCalculator:
                 'avg_hop_time': 0.0,
             }
 
-        # Prune stale edges from graph based on time_window
-        if transactions:
+        # Prune stale edges from graph based on time_window.
+        # Work on a shallow copy so the caller's graph is not mutated.
+        working_graph = graph.copy() if graph else None
+        if working_graph and transactions:
             latest_ts = max(t.timestamp for t in transactions)
             cutoff = latest_ts - self.time_window
-            self.prune_stale_edges(graph, cutoff)
+            self.prune_stale_edges(working_graph, cutoff)
 
         # Filter to valid temporal chain: monotonically increasing timestamps
         # with max_hop_delay between consecutive hops.
@@ -234,7 +236,7 @@ class VelocityCalculator:
             
             if source not in shortest_path_cache:
                 try:
-                    shortest_path_cache[source] = nx.single_source_shortest_path_length(graph, source)
+                    shortest_path_cache[source] = nx.single_source_shortest_path_length(working_graph, source)
                 except nx.NodeNotFound:
                     shortest_path_cache[source] = {}
 
