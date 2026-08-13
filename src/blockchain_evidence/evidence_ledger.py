@@ -128,16 +128,22 @@ class EvidenceLedger:
     def _mine_block(self, block: BlockchainBlock, difficulty: int = 4) -> str:
         """Simple proof-of-work mining."""
         prefix = "0" * difficulty
-        
-        for nonce in range(1000000):
+
+        for nonce in range(10000000):
             block_string = f"{block.block_number}{block.timestamp.isoformat()}{block.previous_hash}{block.merkle_root}{nonce}"
             hash_result = self._compute_hash(block_string)
-            
+
             if hash_result.startswith(prefix):
                 block.nonce = nonce
                 return hash_result
-        
-        return self._compute_hash(f"{block.merkle_root}{random.randint(0, 999999)}")
+
+        # Exhausted iteration budget without finding a valid hash.
+        # Do NOT silently fall back to a hash with no nonce — that discards
+        # all proof-of-work and allows trivial forgeries.
+        raise RuntimeError(
+            f"Proof-of-work could not satisfy difficulty {difficulty} "
+            f"(prefix={prefix!r}) within iteration budget"
+        )
     
     def _log_audit(self, evidence_id: str, action: str, user_id: str, details: Dict[str, Any]) -> None:
         """Log audit entry."""
