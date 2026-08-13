@@ -581,5 +581,5 @@ def get_case_store() -> CaseStore:
                 _store_instance = CaseStore()
     return _store_instance
 
-store_update_lock = False
+store_update_lock = threading.Lock()
 
