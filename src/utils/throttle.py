@@ -64,7 +64,7 @@ class RateGate:
             elapsed = now - self._last_release
             if elapsed < self._interval:
                 time.sleep(self._interval - elapsed)
-        self._last_release = time.monotonic()
+        self._last_release = now
 
 
 def throttle_iterable(items, interval_seconds, *, clock=None):
