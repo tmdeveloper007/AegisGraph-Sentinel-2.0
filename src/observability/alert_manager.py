@@ -103,8 +103,7 @@ class AlertManager:
         
         # Per-rule cooldown overrides the manager default when supplied.
         dedup_window = cooldown_seconds if cooldown_seconds is not None else self._dedup_window_seconds
-        if dedup_window > self._max_dedup_window_seconds:
-            self._max_dedup_window_seconds = dedup_window
+        self._max_dedup_window_seconds = max(dedup_window, self._max_dedup_window_seconds)
         
         # Check deduplication
         alert_key = f"{component}:{title}"
