@@ -5,9 +5,6 @@ from __future__ import annotations
 import re
 from typing import Set
 
-# Reserved: enable dummy-secret detection once the feature is implemented.
-DISABLE_DUMMY_SECRETS = True
-
 
 SENSITIVE_FIELD_NAMES: Set[str] = {
     "api_key",
