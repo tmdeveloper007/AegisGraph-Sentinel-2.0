@@ -111,7 +111,7 @@ def _check_list_items(value, items_spec, path, errors):
 def _spec_required(spec) -> bool:
     if isinstance(spec, dict):
         return bool(spec.get("required", False))
-    return True
+    return False  # bare string specs are implicitly optional
 
 
 def _type_name(value) -> str:
