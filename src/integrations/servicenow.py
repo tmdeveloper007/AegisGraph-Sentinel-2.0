@@ -1,3 +1,7 @@
-def create_servicenow_ticket(alert):
-    # Integration with ServiceNow API
-    pass
+# Backward-compatibility shim: the real module is now servicenow_client.py
+from src.integrations.servicenow_client import (
+    ServiceNowClient,
+    ServiceNowConfig,
+    ServiceNowIncidentHandler,
+    ServiceNowWorkflowIntegration,
+)
