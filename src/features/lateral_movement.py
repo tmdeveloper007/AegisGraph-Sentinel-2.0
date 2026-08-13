@@ -119,7 +119,7 @@ class LateralMovementDetector:
                 pipe.execute()
                 return
             except Exception as e:
-                print(f"Redis update_graph error: {e}. Falling back to in-memory.")
+                logger.warning("Redis update_graph error: %s. Falling back to in-memory.", e)
 
         # Thread-safe in-memory update
         with self._lock:
@@ -203,7 +203,7 @@ class LateralMovementDetector:
                 self._graph_cache.popitem(last=False)
             return G
         except Exception as e:
-            print(f"Redis _get_approx_graph error: {e}. Falling back to in-memory graph.")
+            logger.warning("Redis _get_approx_graph error: %s. Falling back to in-memory graph.", e)
             return self.active_graph
 
     def _calculate_approx_centrality(self, account_id):
@@ -231,7 +231,7 @@ class LateralMovementDetector:
                     self._centrality_cache[account_id] = (result, now)
                     return result
             except Exception as e:
-                print(f"Redis cache lookup error: {e}. Falling back to direct calculation.")
+                logger.warning("Redis cache lookup error: %s. Falling back to direct calculation.", e)
 
         if self.use_neo4j or self.use_redis:
             G = self._get_approx_graph(account_id)
@@ -263,7 +263,7 @@ class LateralMovementDetector:
                 )
                 self.redis_client.setex(redis_cache_key, 86400, result)
             except Exception as e:
-                print(f"Redis cache save error: {e}")
+                logger.error("Redis cache save error: %s", e)
 
         self._centrality_cache[account_id] = (result, now)
         self._centrality_cache.move_to_end(account_id)
@@ -287,7 +287,7 @@ class LateralMovementDetector:
                 history = [float(x) for x in self.redis_client.lrange(history_key, 0, -1)]
                 history.reverse()
             except Exception as e:
-                print(f"Redis history operation error: {e}. Falling back to in-memory baseline.")
+                logger.warning("Redis history operation error: %s. Falling back to in-memory baseline.", e)
 
         if history is None:
             with self._lock:
