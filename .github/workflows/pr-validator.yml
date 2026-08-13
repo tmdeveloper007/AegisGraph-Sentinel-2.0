@@ -127,7 +127,7 @@ jobs:
               sys.exit(1)
         shell: python
 
-      - name: Reject and Auto-Close PR
+      - name: Warn on validation issues (do not auto-close)
         if: failure() && github.event_name == 'pull_request_target'
         uses: actions/github-script@v7
         with:
@@ -136,21 +136,14 @@ jobs:
             let errors = "Unknown validation error.";
             try { errors = fs.readFileSync('errors.txt', 'utf8'); } catch (err) {}
             
-            const prNumber = parseInt(${{ steps.pr_info.outputs.number }}, 10);
-            const commentBody = `⚠️ **PULL REQUEST REJECTED & CLOSED** ⚠️\n\n@${context.actor}, your Pull Request has been automatically closed because it is missing core requirements:\n\n${errors}\n\n💡 **How to fix:** Edit your description, add the details and screenshot, and then **re-open** this PR!`;
+            const prNumber = parseInt(context.payload.pull_request.number, 10);
+            const commentBody = `INFO: PR validation notes:\n\n${errors}`;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
               body: commentBody
-            });
-            
-            await github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber,
-              state: 'closed'
             });
 
       - name: Process GSSoC Rewards and Approval
