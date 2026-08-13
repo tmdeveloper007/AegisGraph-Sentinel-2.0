@@ -27,9 +27,27 @@ class SOARAuditLogger:
         logger.info(f"[SOAR AUDIT] Action: {action} | User: {user_id} | Status: {status} | Details: {json.dumps(safe_log_metadata(details))}")
         return record
 
+SENSITIVE_KEYS = frozenset({
+    "password", "passwd", "secret", "token", "api_key", "apikey",
+    "access_token", "refresh_token", "private_key", "credential",
+    "auth", "authorization", "bearer", "ssn", "credit_card",
+})
+
+def _redact(details: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a copy of details with sensitive fields redacted."""
+    result = {}
+    for k, v in details.items():
+        if k.lower() in SENSITIVE_KEYS:
+            result[k] = "[REDACTED]"
+        elif isinstance(v, dict):
+            result[k] = _redact(v)
+        else:
+            result[k] = v
+    return result
+
 def json_details(details: Dict[str, Any]) -> str:
     try:
         import json
-        return json.dumps(details)
+        return json.dumps(_redact(details))
     except Exception:
         return str(details)
