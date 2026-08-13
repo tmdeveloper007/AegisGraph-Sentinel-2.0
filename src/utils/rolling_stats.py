@@ -83,7 +83,7 @@ class RollingStats:
         values = sorted(self._raw())
         if not values:
             return None
-        index = math.ceil(0.95 * len(values)) - 1
+        index = int(0.95 * (len(values) - 1))
         return values[index]
 
     def rate(self) -> float:
