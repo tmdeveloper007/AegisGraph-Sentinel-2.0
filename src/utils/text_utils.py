@@ -119,6 +119,25 @@ def camel_to_snake(value):
     return value.lower()
 
 
+
+def slugify_url(value, max_length=128, allowed_chars="-"):
+    """Convert ``value`` into a URL-safe slug, preserving alphanumeric runs.
+
+    Strips all characters except alphanumerics, hyphens, underscores, and
+    ``allowed_chars``. Collapses runs of separators to a single character.
+    Truncates to ``max_length``. Returns empty string for None.
+    """
+    if value is None:
+        return ""
+    import re
+    value = str(value)
+    if not value:
+        return ""
+    result = re.sub(r"[^a-zA-Z0-9" + re.escape(allowed_chars) + r"]+", "-", value)
+    result = re.sub(r"-+", "-", result)
+    return result.strip("-")[:max_length]
+
+
 def sanitize_log_message(value):
     """Strip ANSI escape sequences and control characters for safe logging."""
     if value is None:

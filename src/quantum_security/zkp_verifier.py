@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import time
 from typing import Dict, Any, Optional, Tuple
@@ -56,7 +57,14 @@ class ZKPVerifier:
     """Zero-Knowledge Proof Generator & Verifier for Blockchain Evidence."""
 
     def __init__(self, secret_key: Optional[str] = None):
-        self.secret_key = secret_key or os.getenv("ZKP_SECRET_KEY", secrets.token_hex(32))
+        key = secret_key or os.getenv("ZKP_SECRET_KEY")
+        if not key:
+            raise RuntimeError(
+                "ZKP_SECRET_KEY is not configured. Set the ZKP_SECRET_KEY "
+                "environment variable to a shared secret so proofs generated "
+                "by the seal path can be verified."
+            )
+        self.secret_key = key
 
     def generate_proof(
         self,
@@ -102,6 +110,7 @@ class ZKPVerifier:
             "commitment_hash": commitment,
             "challenge": challenge,
             "response": response,
+            "salt": salt,
             "verification_key": verification_key,
             "threshold": threshold,
             "is_above_threshold": True,
@@ -138,9 +147,37 @@ class ZKPVerifier:
             if not hmac.compare_digest(proof_payload.get("verification_key", ""), expected_vk):
                 return False
 
+            # 3. Verify the response proves knowledge of the secret key bound to
+            #    this proof's challenge and per-proof salt.
+            salt = proof_payload.get("salt")
+            if not salt:
+                return False
+            expected_response_data = f"{self.secret_key}:{challenge}:{salt}".encode("utf-8")
+            expected_response = hmac.new(
+                self.secret_key.encode("utf-8"),
+                expected_response_data,
+                hashlib.sha256,
+            ).hexdigest()
+            if not hmac.compare_digest(response, expected_response):
+                return False
+
             return True
         except KeyError:
             return False
 
 
-import os
+_zkp_verifier: Optional[ZKPVerifier] = None
+
+
+def get_zkp_verifier() -> ZKPVerifier:
+    """Return the shared module-level ZKP verifier instance.
+
+    The instance is built from ``ZKP_SECRET_KEY`` exactly once and reused by
+    both the seal path (``BlockchainEvidenceManager``) and the verification
+    path (``/api/v1/blockchain/verify-zk``), so a proof can always be verified
+    with the same key that generated it.
+    """
+    global _zkp_verifier
+    if _zkp_verifier is None:
+        _zkp_verifier = ZKPVerifier()
+    return _zkp_verifier
