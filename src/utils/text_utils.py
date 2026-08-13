@@ -119,6 +119,29 @@ def camel_to_snake(value):
     return value.lower()
 
 
+
+def validate_url(value, allowed_schemes=None) -> bool:
+    """Return True if ``value`` is a valid URL with an allowed scheme.
+
+    ``allowed_schemes`` defaults to ``{'http', 'https'}``. Returns False
+    for None, non-string values, or URLs not matching the scheme allowlist.
+    """
+    if value is None:
+        return False
+    if not isinstance(value, str):
+        return False
+    allowed_schemes = allowed_schemes or frozenset(("http", "https"))
+    try:
+        from urllib.parse import urlparse
+    except ImportError:
+        return False
+    try:
+        parsed = urlparse(value)
+        return bool(parsed.scheme and parsed.netloc and parsed.scheme in allowed_schemes)
+    except Exception:
+        return False
+
+
 def sanitize_log_message(value):
     """Strip ANSI escape sequences and control characters for safe logging."""
     if value is None:
