@@ -150,16 +150,18 @@ async def on_sentinel_alert(event: SentinelAlertEvent) -> None:
     try:
         settings = get_settings()
         
-        # Escalate severity for high-value transactions
+        # Escalate severity for high-value transactions (immutable via replace)
+        from dataclasses import replace
         amount = event.payload.get("amount")
         high_value_threshold = getattr(settings.scoring, "high_value_threshold", 500000.0)
-        if amount is not None and amount >= high_value_threshold:
-            if event.severity not in ("HIGH", "CRITICAL"):
-                event.severity = "HIGH"
-                event.title = f"[Escalated] {event.title}"
+        escalate = amount is not None and amount >= high_value_threshold and event.severity not in ("HIGH", "CRITICAL")
+        escalated_event = replace(event,
+            severity="HIGH" if escalate else event.severity,
+            title=f"[Escalated] {event.title}" if escalate else event.title
+        )
 
         manager = WebhookManager(settings.webhook)
-        await manager.send_alert(event)
+        await manager.send_alert(escalated_event)
     except Exception as exc:
         _logger.error(
             f"Failed processing sentinel webhook alert: {exc}",
