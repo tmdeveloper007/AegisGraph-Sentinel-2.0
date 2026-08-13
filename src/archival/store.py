@@ -123,11 +123,16 @@ class SentinelLogStore:
         """
         with self._lock:
             before = len(self._hot)
-            retained = deque(
-                (l for l in self._hot if not l.archived),
-                maxlen=self._hot.maxlen,
-            )
-            self._hot = retained
+            purged_ids: List[str] = []
+            retained_logs: Deque[SentinelLog] = deque(maxlen=self._hot.maxlen)
+            for log in self._hot:
+                if log.archived:
+                    purged_ids.append(log.log_id)
+                else:
+                    retained_logs.append(log)
+            self._hot = retained_logs
+            # Remove purged IDs from _archive_ids to keep it in sync.
+            self._archive_ids -= set(purged_ids)
             after = len(self._hot)
         return before - after
 
