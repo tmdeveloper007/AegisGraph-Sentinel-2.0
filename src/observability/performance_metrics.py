@@ -181,8 +181,10 @@ class PerformanceTracker:
         """Get overall performance summary."""
         components = ["api", "database", "cache", "queue", "worker"]
         
+        health_summary = self._store.get_health_summary()
+        overall_health = health_summary.get("average_health_score", 0.0)
         summary = {
-            "overall_health": 95.0,  # Placeholder
+            "overall_health": overall_health,
             "components": {},
         }
         
