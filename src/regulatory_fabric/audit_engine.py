@@ -235,8 +235,8 @@ class AuditAutomationEngine:
         
         # Calculate summary statistics
         total_controls = len(plan.scope)
-        passed = len([a for a in assessments if a.get("controls_passed", 0) > 0])
-        failed = len([a for a in assessments if a.get("controls_failed", 0) > 0])
+        passed = sum(a.get("controls_passed", 0) for a in assessments)
+        failed = sum(a.get("controls_failed", 0) for a in assessments)
         
         return {
             "report_id": str(hashlib.md5(f"report{plan_id}{datetime.now(timezone.utc)}".encode()).hexdigest()[:16]),
