@@ -4,7 +4,6 @@ Performance Metrics Module.
 Performance tracking and monitoring.
 """
 
-import random
 import threading
 from threading import Lock
 from typing import Dict, List, Optional, Any
