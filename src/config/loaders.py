@@ -164,7 +164,7 @@ def _bool_from_env(value: Optional[str], default: bool = False) -> bool:
     normalized = value.strip().lower()
 
     truthy = {"1", "true", "yes", "on"}
-    falsy = {"0", "false", "no", "off", "release"}
+    falsy = {"0", "false", "no", "off"}
 
     if normalized in truthy:
         return True
