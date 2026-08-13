@@ -508,8 +508,41 @@ class NetworkAnalysisEngine:
         return communities
 
     def _classify_community(self, member_ids: List[str]) -> str:
-        """Classify the type of community."""
-        return "fraud_ring"
+        """Classify the type of community based on entity properties and graph topology.
+
+        Analyzes entity risk scores, entity types, and connectivity patterns to
+        assign an appropriate threat label instead of unconditionally returning
+        "fraud_ring" for every community.
+        """
+        if not member_ids:
+            return "unknown"
+
+        entities = [self._store.get_entity(mid) for mid in member_ids]
+        entities = [e for e in entities if e is not None]
+
+        if not entities:
+            return "unknown"
+
+        avg_risk = sum(e.risk_score for e in entities) / len(entities)
+
+        # Count entity types
+        entity_types: Dict[str, int] = defaultdict(int)
+        for e in entities:
+            entity_types[e.entity_type.value if hasattr(e.entity_type, "value") else str(e.entity_type)] += 1
+
+        # Count high-risk entities
+        high_risk_count = sum(1 for e in entities if e.risk_score >= 0.7)
+        high_risk_ratio = high_risk_count / len(entities)
+
+        # Determine label based on analysis
+        if avg_risk >= 0.8 and high_risk_ratio >= 0.5:
+            return "fraud_ring"
+        elif avg_risk >= 0.5:
+            return "risk_cluster"
+        elif any(et in entity_types for et in ("ip_address", "device", "account")):
+            return "normal_network"
+        else:
+            return "anomalous_activity"
 
     def _calculate_community_metrics(
         self,
